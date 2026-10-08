@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>เคสของฉัน - Dr.Orn IT Helpdesk</title>
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, "Noto Sans Thai", sans-serif;
+      background: #f5f5f5;
+      color: #222;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: #222;
+      color: white;
+      border-radius: 16px;
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+    }
+
+    .header p {
+      margin: 0;
+      font-size: 14px;
+      opacity: 0.85;
+    }
+
+    .loading,
+    .empty,
+    .error {
+      background: white;
+      border-radius: 16px;
+      padding: 30px 20px;
+      text-align: center;
+    }
+
+    .ticket {
+      background: white;
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .ticket-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .ticket-id {
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .status {
+      padding: 6px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .status-open {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .status-progress {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .status-pending {
+      background: #ffedd5;
+      color: #c2410c;
+    }
+
+    .status-resolved {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .status-closed {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .row {
+      margin-bottom: 9px;
+      font-size: 14px;
+    }
+
+    .label {
+      color: #777;
+      margin-right: 6px;
+    }
+
+    .problem {
+      background: #f8f8f8;
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 12px;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .refresh {
+      width: 100%;
+      border: 0;
+      border-radius: 12px;
+      padding: 13px;
+      margin-bottom: 16px;
+      background: #222;
+      color: white;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .refresh:active {
+      opacity: 0.8;
+    }
+
+    .footer {
+      text-align: center;
+      color: #999;
+      font-size: 12px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <h1>📋 เคสของฉัน</h1>
+    <p id="userName">กำลังโหลดข้อมูล...</p>
+  </div>
+
+  <button class="refresh" onclick="loadTickets()">
+    🔄 รีเฟรชรายการเคส
+  </button>
+
+  <div id="content">
+    <div class="loading">
+      กำลังโหลดรายการ Ticket...
+    </div>
+  </div>
+
+  <div class="footer">
+    Dr.Orn IT Helpdesk
+  </div>
+
+</div>
+
+<script>
+
+const LIFF_ID = '2011909669-olKYnktd';
+
+const API_URL =
+  'https://drorn-it-helpdesk-webhook.nattima-p.workers.dev';
+
+let currentUserId = '';
+
+/* =====================================================
+   INIT LIFF
+===================================================== */
+
+async function init() {
+
+  try {
+
+    await liff.init({
+      liffId: LIFF_ID
+    });
+
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
+    }
+
+    const profile =
+      await liff.getProfile();
+
+    currentUserId =
+      profile.userId;
+
+    document.getElementById('userName').textContent =
+      'สวัสดีคุณ ' + (profile.displayName || '');
+
+    await loadTickets();
+
+  } catch (error) {
+
+    console.error(error);
+
+    showError(
+      'ไม่สามารถเชื่อมต่อระบบได้<br>' +
+      escapeHtml(error.message || String(error))
+    );
+
+  }
+
+}
+
+/* =====================================================
+   LOAD TICKETS
+===================================================== */
+
+async function loadTickets() {
+
+  if (!currentUserId) {
+    return;
+  }
+
+  const content =
+    document.getElementById('content');
+
+  content.innerHTML =
+    '<div class="loading">กำลังโหลดรายการ Ticket...</div>';
+
+  try {
+
+    const payload = {
+      action: 'myTickets',
+      lineUserId: currentUserId
+    };
+
+    const response =
+      await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type':
+            'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify(payload),
+        redirect: 'follow'
+      });
+
+    const result =
+      await response.json();
+
+    console.log('My Tickets response:', result);
+
+    if (!result.ok) {
+
+      throw new Error(
+        result.error ||
+        'ไม่สามารถโหลด Ticket ได้'
+      );
+
+    }
+
+    const tickets =
+      result.tickets || [];
+
+    renderTickets(tickets);
+
+  } catch (error) {
+
+    console.error(error);
+
+    showError(
+      'เกิดข้อผิดพลาด<br>' +
+      escapeHtml(
+        error.message ||
+        String(error)
+      )
+    );
+
+  }
+
+}
+
+/* =====================================================
+   RENDER TICKETS
+===================================================== */
+
+function renderTickets(tickets) {
+
+  const content =
+    document.getElementById('content');
+
+  if (!tickets.length) {
+
+    content.innerHTML = `
+      <div class="empty">
+        <div style="font-size:42px;margin-bottom:12px;">
+          📭
+        </div>
+
+        <div style="font-weight:bold;margin-bottom:8px;">
+          ยังไม่มี Ticket
+        </div>
+
+        <div style="color:#777;font-size:14px;">
+          เมื่อคุณแจ้งปัญหา IT<br>
+          Ticket จะแสดงที่หน้านี้
+        </div>
+      </div>
+    `;
+
+    return;
+  }
+
+  content.innerHTML =
+    tickets
+      .map(ticket => createTicketCard(ticket))
+      .join('');
+
+}
+
+/* =====================================================
+   TICKET CARD
+===================================================== */
+
+function createTicketCard(ticket) {
+
+  const ticketId =
+    ticket.ticketId ||
+    ticket['Ticket ID'] ||
+    '-';
+
+  const createdAt =
+    ticket.createdAt ||
+    ticket['Created At'] ||
+    '-';
+
+  const branch =
+    ticket.branch ||
+    ticket['Branch'] ||
+    '-';
+
+  const category =
+    ticket.category ||
+    ticket['Category'] ||
+    '-';
+
+  const problem =
+    ticket.problem ||
+    ticket['Problem'] ||
+    '-';
+
+  const priority =
+    ticket.priority ||
+    ticket['Priority'] ||
+    '-';
+
+  const status =
+    ticket.status ||
+    ticket['Status'] ||
+    'Open';
+
+  const assignee =
+    ticket.assignee ||
+    ticket['Assignee'] ||
+    '-';
+
+  const slaDue =
+    ticket.slaDue ||
+    ticket['SLA Due'] ||
+    '-';
+
+  return `
+    <div class="ticket">
+
+      <div class="ticket-header">
+
+        <div class="ticket-id">
+          🎫 ${escapeHtml(ticketId)}
+        </div>
+
+        <div class="status ${getStatusClass(status)}">
+          ${getStatusText(status)}
+        </div>
+
+      </div>
+
+      <div class="row">
+        <span class="label">📅 วันที่แจ้ง:</span>
+        ${escapeHtml(formatDate(createdAt))}
+      </div>
+
+      <div class="row">
+        <span class="label">🏥 สาขา:</span>
+        ${escapeHtml(branch)}
+      </div>
+
+      <div class="row">
+        <span class="label">📂 ประเภท:</span>
+        ${escapeHtml(category)}
+      </div>
+
+      <div class="row">
+        <span class="label">⚠️ Priority:</span>
+        ${escapeHtml(priority)}
+      </div>
+
+      <div class="row">
+        <span class="label">👨‍💻 ผู้รับผิดชอบ:</span>
+        ${escapeHtml(assignee)}
+      </div>
+
+      <div class="row">
+        <span class="label">⏰ SLA Due:</span>
+        ${escapeHtml(formatDate(slaDue))}
+      </div>
+
+      <div class="problem">
+        <strong>📝 ปัญหา</strong>
+        <br><br>
+        ${escapeHtml(problem)}
+      </div>
+
+    </div>
+  `;
+
+}
+
+/* =====================================================
+   STATUS
+===================================================== */
+
+function getStatusClass(status) {
+
+  switch (status) {
+
+    case 'Open':
+      return 'status-open';
+
+    case 'In Progress':
+      return 'status-progress';
+
+    case 'Pending':
+      return 'status-pending';
+
+    case 'Resolved':
+      return 'status-resolved';
+
+    case 'Closed':
+      return 'status-closed';
+
+    default:
+      return 'status-closed';
+
+  }
+
+}
+
+function getStatusText(status) {
+
+  switch (status) {
+
+    case 'Open':
+      return '🟡 เปิดเคส';
+
+    case 'In Progress':
+      return '🔵 กำลังดำเนินการ';
+
+    case 'Pending':
+      return '🟠 รอดำเนินการ';
+
+    case 'Resolved':
+      return '🟢 แก้ไขแล้ว';
+
+    case 'Closed':
+      return '✅ ปิดแล้ว';
+
+    default:
+      return status || '-';
+
+  }
+
+}
+
+/* =====================================================
+   FORMAT DATE
+===================================================== */
+
+function formatDate(value) {
+
+  if (!value || value === '-') {
+    return '-';
+  }
+
+  try {
+
+    const date =
+      new Date(value);
+
+    if (isNaN(date.getTime())) {
+      return String(value);
+    }
+
+    return date.toLocaleString(
+      'th-TH',
+      {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }
+    );
+
+  } catch (error) {
+
+    return String(value);
+
+  }
+
+}
+
+/* =====================================================
+   ERROR
+===================================================== */
+
+function showError(message) {
+
+  document.getElementById('content').innerHTML = `
+    <div class="error">
+      <div style="font-size:40px;margin-bottom:12px;">
+        ⚠️
+      </div>
+
+      <div style="font-weight:bold;margin-bottom:10px;">
+        ไม่สามารถโหลดข้อมูลได้
+      </div>
+
+      <div style="color:#777;font-size:14px;">
+        ${message}
+      </div>
+    </div>
+  `;
+
+}
+
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
+
+function escapeHtml(value) {
+
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+}
+
+/* =====================================================
+   START
+===================================================== */
+
+init();
+
+</script>
+
+</body>
+</html>
