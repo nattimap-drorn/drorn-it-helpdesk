@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ประเมินความพึงพอใจ - Dr.Orn IT Helpdesk</title>
+
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  font-family: Arial, "Noto Sans Thai", sans-serif;
+  background: #f5f6f8;
+  color: #222;
+}
+
+.container {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.08);
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 22px;
+}
+
+.ticket {
+  background: #f1f3f5;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 24px;
+  font-weight: bold;
+}
+
+.question {
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.stars {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.star {
+  border: 0;
+  background: transparent;
+  font-size: 38px;
+  cursor: pointer;
+  padding: 4px;
+  opacity: .35;
+}
+
+.star.selected {
+  opacity: 1;
+}
+
+textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  border: 1px solid #d0d4d9;
+  border-radius: 10px;
+  font-size: 16px;
+  resize: vertical;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+button.submit {
+  width: 100%;
+  margin-top: 18px;
+  padding: 14px;
+  border: 0;
+  border-radius: 10px;
+  background: #222;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button.submit:disabled {
+  opacity: .5;
+}
+
+.status {
+  margin-top: 16px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.success {
+  color: #16803c;
+}
+
+.error {
+  color: #c62828;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="card">
+
+    <h1>⭐ ประเมินความพึงพอใจ</h1>
+
+    <div id="ticketBox" class="ticket">
+      กำลังโหลด Ticket...
+    </div>
+
+    <div class="question">
+      คุณพึงพอใจกับการให้บริการ IT มากน้อยเพียงใด?
+    </div>
+
+    <div class="stars">
+
+      <button class="star" data-rating="1">★</button>
+      <button class="star" data-rating="2">★</button>
+      <button class="star" data-rating="3">★</button>
+      <button class="star" data-rating="4">★</button>
+      <button class="star" data-rating="5">★</button>
+
+    </div>
+
+    <label for="comment">
+      ความคิดเห็นเพิ่มเติม
+    </label>
+
+    <textarea
+      id="comment"
+      placeholder="ความคิดเห็นเพิ่มเติม (ถ้ามี)"
+    ></textarea>
+
+    <button
+      id="submitButton"
+      class="submit"
+      onclick="submitSurvey()"
+      disabled
+    >
+      ⭐ ส่งแบบประเมิน
+    </button>
+
+    <div id="status" class="status">
+      กำลังตรวจสอบผู้ใช้งาน...
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+/* =====================================================
+   CONFIG
+===================================================== */
+
+const LIFF_ID = '2011909669-UKBDfE5E';
+
+const API_URL =
+  'https://drorn-it-helpdesk-webhook.nattima-p.workers.dev';
+
+
+/* =====================================================
+   GLOBAL
+===================================================== */
+
+let currentTicketId = '';
+let currentUserId = '';
+let selectedRating = 0;
+
+
+/* =====================================================
+   STAR RATING
+===================================================== */
+
+document
+  .querySelectorAll('.star')
+  .forEach(function(star) {
+
+    star.addEventListener(
+      'click',
+      function() {
+
+        selectedRating =
+          Number(
+            this.dataset.rating
+          );
+
+        updateStars();
+
+        document.getElementById(
+          'submitButton'
+        ).disabled = false;
+
+      }
+    );
+
+  });
+
+
+function updateStars() {
+
+  document
+    .querySelectorAll('.star')
+    .forEach(function(star) {
+
+      const rating =
+        Number(
+          star.dataset.rating
+        );
+
+      if (
+        rating <= selectedRating
+      ) {
+
+        star.classList.add(
+          'selected'
+        );
+
+      } else {
+
+        star.classList.remove(
+          'selected'
+        );
+
+      }
+
+    });
+
+}
+
+
+/* =====================================================
+   INIT
+===================================================== */
+
+async function init() {
+
+  const status =
+    document.getElementById(
+      'status'
+    );
+
+  try {
+
+    status.textContent =
+      'กำลังเปิดระบบ...';
+
+    await liff.init({
+      liffId: LIFF_ID
+    });
+
+
+    if (!liff.isLoggedIn()) {
+
+      liff.login();
+
+      return;
+
+    }
+
+
+    const profile =
+      await liff.getProfile();
+
+
+    const params =
+      new URLSearchParams(
+        window.location.search
+      );
+
+
+    const ticketId =
+      params.get('ticketId');
+
+
+    if (!ticketId) {
+
+      throw new Error(
+        'ไม่พบ Ticket ID'
+      );
+
+    }
+
+
+    currentTicketId =
+      ticketId;
+
+    currentUserId =
+      profile.userId;
+
+
+    document.getElementById(
+      'ticketBox'
+    ).textContent =
+      '🎫 Ticket: ' +
+      currentTicketId;
+
+
+    status.textContent =
+      'ผู้ประเมิน: ' +
+      (profile.displayName || 'ผู้ใช้งาน');
+
+
+  } catch (error) {
+
+    console.error(
+      'INIT ERROR:',
+      error
+    );
+
+    status.innerHTML =
+      '<span class="error">' +
+      '❌ ' +
+      (error.message || error) +
+      '</span>';
+
+  }
+
+}
+
+
+/* =====================================================
+   SUBMIT SURVEY
+===================================================== */
+
+async function submitSurvey() {
+
+  if (!selectedRating) {
+
+    alert(
+      'กรุณาเลือกคะแนน 1-5 ดาว'
+    );
+
+    return;
+
+  }
+
+
+  const button =
+    document.getElementById(
+      'submitButton'
+    );
+
+  const status =
+    document.getElementById(
+      'status'
+    );
+
+  const comment =
+    document.getElementById(
+      'comment'
+    ).value.trim();
+
+
+  button.disabled = true;
+
+  status.textContent =
+    'กำลังบันทึกแบบประเมิน...';
+
+
+  try {
+
+    const payload = {
+
+      action: 'survey',
+
+      ticketId:
+        currentTicketId,
+
+      lineUserId:
+        currentUserId,
+
+      rating:
+        selectedRating,
+
+      comment:
+        comment
+
+    };
+
+
+    const response =
+      await fetch(
+        API_URL,
+        {
+          method: 'POST',
+
+          headers: {
+            'Content-Type':
+              'text/plain;charset=utf-8'
+          },
+
+          body:
+            JSON.stringify(payload),
+
+          redirect:
+            'follow'
+        }
+      );
+
+
+    const responseText =
+      await response.text();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        'HTTP ' +
+        response.status +
+        ': ' +
+        responseText
+      );
+
+    }
+
+
+    let result;
+
+    try {
+
+      result =
+        JSON.parse(
+          responseText
+        );
+
+    } catch (jsonError) {
+
+      throw new Error(
+        'Backend ไม่ได้ส่ง JSON กลับมา'
+      );
+
+    }
+
+
+    if (!result.ok) {
+
+      throw new Error(
+        result.error ||
+        result.message ||
+        'ไม่สามารถบันทึกแบบประเมินได้'
+      );
+
+    }
+
+
+    status.innerHTML =
+      '<span class="success">' +
+      '✅ ขอบคุณสำหรับการประเมินค่ะ' +
+      '<br><br>' +
+      'ความคิดเห็นของคุณถูกบันทึกเรียบร้อยแล้ว' +
+      '</span>';
+
+
+    document.getElementById(
+      'comment'
+    ).disabled = true;
+
+
+    document
+      .querySelectorAll('.star')
+      .forEach(function(star) {
+        star.disabled = true;
+      });
+
+
+    button.style.display =
+      'none';
+
+
+  } catch (error) {
+
+    console.error(
+      'SURVEY ERROR:',
+      error
+    );
+
+    button.disabled = false;
+
+    status.innerHTML =
+      '<span class="error">' +
+      '❌ ส่งแบบประเมินไม่สำเร็จ' +
+      '<br><br>' +
+      (error.message || error) +
+      '</span>';
+
+  }
+
+}
+
+
+init();
+
+</script>
+
+</body>
+</html>
