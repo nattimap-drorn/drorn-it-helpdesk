@@ -1,424 +1,211 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
-
   <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+  <title>My Tickets - Dr.Orn IT Helpdesk</title>
 
-  <title>
-    เคสของฉัน - Dr.Orn IT Helpdesk
-  </title>
-
-  <script
-    src="https://static.line-scdn.net/liff/edge/2/sdk.js">
-  </script>
-
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
   <style>
-
     * {
       box-sizing: border-box;
     }
 
-
     body {
-
       margin: 0;
-
       padding: 20px;
-
       font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
         Arial,
-        "Noto Sans Thai",
         sans-serif;
-
-      background: #f5f5f5;
-
+      background: #f5f6f8;
       color: #222;
-
     }
-
 
     .container {
-
       max-width: 700px;
-
       margin: auto;
-
     }
 
-
-    .header {
-
-      background: #222;
-
-      color: white;
-
-      border-radius: 16px;
-
-      padding: 22px;
-
-      margin-bottom: 16px;
-
+    h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
     }
 
-
-    .header h1 {
-
-      margin: 0 0 8px;
-
-      font-size: 22px;
-
-    }
-
-
-    .header p {
-
-      margin: 0;
-
-      font-size: 14px;
-
-      opacity: .85;
-
-    }
-
-
-    .refresh {
-
-      width: 100%;
-
-      border: 0;
-
-      border-radius: 12px;
-
-      padding: 13px;
-
-      margin-bottom: 16px;
-
-      background: #222;
-
-      color: white;
-
-      font-size: 15px;
-
-      cursor: pointer;
-
-    }
-
-
-    .refresh:active {
-
-      transform: scale(.98);
-
-    }
-
-
-    .ticket {
-
-      background: white;
-
-      border-radius: 16px;
-
-      padding: 18px;
-
-      margin-bottom: 14px;
-
-      box-shadow:
-        0 2px 8px rgba(0,0,0,.06);
-
-    }
-
-
-    .ticket-header {
-
-      display: flex;
-
-      justify-content: space-between;
-
-      gap: 10px;
-
-      align-items: center;
-
-      margin-bottom: 14px;
-
-    }
-
-
-    .ticket-id {
-
-      font-weight: bold;
-
-      font-size: 15px;
-
-    }
-
-
-    .status {
-
-      padding: 6px 10px;
-
-      border-radius: 20px;
-
-      font-size: 12px;
-
-      font-weight: bold;
-
-      white-space: nowrap;
-
-    }
-
-
-    .open {
-
-      background: #fff3cd;
-
-      color: #856404;
-
-    }
-
-
-    .progress {
-
-      background: #dbeafe;
-
-      color: #1d4ed8;
-
-    }
-
-
-    .pending {
-
-      background: #ffedd5;
-
-      color: #c2410c;
-
-    }
-
-
-    .resolved {
-
-      background: #dcfce7;
-
-      color: #15803d;
-
-    }
-
-
-    .closed {
-
-      background: #e5e7eb;
-
-      color: #374151;
-
-    }
-
-
-    .row {
-
-      font-size: 14px;
-
-      margin: 8px 0;
-
-      line-height: 1.5;
-
-    }
-
-
-    .label {
-
+    .subtitle {
       color: #777;
-
+      margin-bottom: 20px;
     }
 
-
-    .problem {
-
-      background: #f8f8f8;
-
-      padding: 12px;
-
-      border-radius: 10px;
-
-      margin-top: 12px;
-
-      font-size: 14px;
-
-      line-height: 1.5;
-
-    }
-
-
-    .message {
-
-      background: white;
-
-      border-radius: 16px;
-
-      padding: 30px 20px;
-
+    .loading {
       text-align: center;
-
+      padding: 40px 10px;
+      color: #777;
     }
-
 
     .error {
-
-      color: #b91c1c;
-
+      background: #fff1f1;
+      border: 1px solid #ffcccc;
+      color: #c62828;
+      padding: 16px;
+      border-radius: 12px;
+      margin-top: 20px;
+      word-break: break-word;
     }
-
 
     .summary {
-
       background: white;
-
+      padding: 16px;
       border-radius: 12px;
-
-      padding: 14px;
-
-      margin-bottom: 14px;
-
-      font-size: 14px;
-
+      margin-bottom: 15px;
+      font-weight: 600;
     }
 
+    .ticket {
+      background: white;
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
 
-    .debug {
+    .ticket-id {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
 
+    .row {
+      margin: 6px 0;
+      line-height: 1.5;
+    }
+
+    .label {
+      color: #777;
+      display: inline-block;
+      min-width: 100px;
+    }
+
+    .problem {
+      margin-top: 12px;
+      padding: 12px;
+      background: #f7f7f7;
+      border-radius: 10px;
+      white-space: pre-wrap;
+    }
+
+    .resolution {
+      margin-top: 10px;
+      padding: 12px;
+      background: #eef8ee;
+      border-radius: 10px;
+      white-space: pre-wrap;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .status-open {
       background: #fff3cd;
-
-      border: 1px solid #ffe69c;
-
-      border-radius: 12px;
-
-      padding: 14px;
-
-      margin-top: 14px;
-
-      font-size: 12px;
-
-      word-break: break-word;
-
+      color: #856404;
     }
 
+    .status-progress {
+      background: #cfe8ff;
+      color: #075985;
+    }
+
+    .status-pending {
+      background: #eee;
+      color: #555;
+    }
+
+    .status-resolved {
+      background: #dff5e1;
+      color: #26733b;
+    }
+
+    .status-closed {
+      background: #d9f2df;
+      color: #176b2c;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 50px 20px;
+      background: white;
+      border-radius: 14px;
+      color: #777;
+    }
+
+    .refresh {
+      width: 100%;
+      border: 0;
+      background: #222;
+      color: white;
+      padding: 13px;
+      border-radius: 10px;
+      font-size: 16px;
+      margin-top: 10px;
+    }
   </style>
-
 </head>
-
 
 <body>
 
-
 <div class="container">
 
+  <h1>📋 Ticket ของฉัน</h1>
 
-  <!-- =================================================
-       HEADER
-  ================================================== -->
-
-  <div class="header">
-
-    <h1>
-      📋 เคสของฉัน
-    </h1>
-
-    <p id="userName">
-      กำลังเชื่อมต่อ LINE...
-    </p>
-
+  <div class="subtitle">
+    Dr.Orn IT Helpdesk
   </div>
 
-
-  <!-- =================================================
-       REFRESH
-  ================================================== -->
-
-  <button
-    class="refresh"
-    onclick="loadTickets()"
-  >
-
-    🔄 รีเฟรชรายการเคส
-
-  </button>
-
-
-  <!-- =================================================
-       CONTENT
-  ================================================== -->
-
-  <div id="content">
-
-    <div class="message">
-
-      กำลังโหลด...
-
-    </div>
-
+  <div id="loading" class="loading">
+    กำลังโหลดข้อมูล...
   </div>
 
+  <div id="error"></div>
+
+  <div id="content"></div>
 
 </div>
 
-
 <script>
-
-
-/* =====================================================
-   CONFIG
-===================================================== */
 
 const LIFF_ID =
   '2011909669-olKYnktd';
 
-
 const API_URL =
   'https://drorn-it-helpdesk-webhook.nattima-p.workers.dev';
-
 
 let currentUserId = '';
 
 
-
 /* =====================================================
-   INIT LIFF
+   INIT
 ===================================================== */
 
 async function init() {
 
   try {
 
-
-    document
-      .getElementById('userName')
-      .textContent =
-        'กำลังเริ่มต้น LIFF...';
-
+    document.getElementById('loading').style.display =
+      'block';
 
     await liff.init({
-
-      liffId:
-        LIFF_ID
-
+      liffId: LIFF_ID
     });
-
-
-    document
-      .getElementById('userName')
-      .textContent =
-        'LIFF เริ่มต้นสำเร็จ กำลังตรวจสอบบัญชี...';
-
-
-    /*
-     * ================================================
-     * ตรวจสอบ Login
-     * ================================================
-     */
 
     if (!liff.isLoggedIn()) {
 
@@ -428,57 +215,32 @@ async function init() {
 
     }
 
-
-    /*
-     * ================================================
-     * อ่าน Profile
-     * ================================================
-     */
-
     const profile =
       await liff.getProfile();
-
 
     currentUserId =
       profile.userId;
 
-
-    document
-      .getElementById('userName')
-      .textContent =
-        'สวัสดีคุณ ' +
-        (
-          profile.displayName ||
-          ''
-        );
-
-
-    /*
-     * ================================================
-     * โหลด Ticket
-     * ================================================
-     */
+    console.log(
+      'LINE User ID:',
+      currentUserId
+    );
 
     await loadTickets();
 
+  }
+  catch (error) {
 
-  } catch (error) {
-
-
-    console.error(
-      'LIFF INIT ERROR:',
-      error
-    );
-
+    console.error(error);
 
     showError(
-      error
+      'เกิดข้อผิดพลาดตอนเปิดระบบ<br><br>' +
+      escapeHtml(error.message || String(error))
     );
 
   }
 
 }
-
 
 
 /* =====================================================
@@ -487,133 +249,73 @@ async function init() {
 
 async function loadTickets() {
 
-
-  if (!currentUserId) {
-
-    showError(
-      new Error(
-        'ไม่พบ LINE User ID'
-      )
-    );
-
-    return;
-
-  }
-
-
-  const content =
-    document.getElementById(
-      'content'
-    );
-
-
-  content.innerHTML =
-
-    '<div class="message">' +
-
-      'กำลังโหลดรายการ Ticket...' +
-
-    '</div>';
-
-
   try {
 
+    document.getElementById('loading').style.display =
+      'block';
 
-    /*
-     * ================================================
-     * Request
-     * ================================================
-     */
+    document.getElementById('error').innerHTML =
+      '';
 
-    const payload = {
-
-      action:
-        'myTickets',
-
-      lineUserId:
-        currentUserId
-
-    };
-
-
-    console.log(
-      'MY TICKETS REQUEST:',
-      payload
-    );
-
-
-    /*
-     * ================================================
-     * Call Worker
-     * ================================================
-     */
+    document.getElementById('content').innerHTML =
+      '';
 
     const response =
       await fetch(
-
         API_URL,
-
         {
-
-          method:
-            'POST',
+          method: 'POST',
 
           headers: {
-
             'Content-Type':
-              'text/plain;charset=utf-8'
-
+              'application/json'
           },
 
-          body:
-            JSON.stringify(
-              payload
-            ),
-
-          redirect:
-            'follow'
-
+          body: JSON.stringify({
+            action: 'myTickets',
+            lineUserId: currentUserId
+          })
         }
-
       );
 
-
-    /*
-     * ================================================
-     * อ่าน Response
-     * ================================================
-     */
-
-    const text =
+    const rawText =
       await response.text();
 
-
     console.log(
-      'MY TICKETS RAW RESPONSE:',
-      text
+      'WORKER RAW RESPONSE:',
+      rawText
     );
 
+    if (!rawText) {
 
-    /*
-     * ================================================
-     * Parse Worker JSON
-     * ================================================
-     */
+      throw new Error(
+        'Worker ไม่ส่ง Response กลับมา'
+      );
+
+    }
+
+
+    /* =================================================
+       PARSE WORKER RESPONSE
+    ================================================= */
 
     let workerResult;
-
 
     try {
 
       workerResult =
-        JSON.parse(
-          text
-        );
+        JSON.parse(rawText);
 
-    } catch (error) {
+    }
+    catch (e) {
+
+      console.error(
+        'Invalid JSON:',
+        rawText
+      );
 
       throw new Error(
-        'Worker ไม่ได้ส่ง JSON ที่ถูกต้อง'
+        'Worker Response ไม่ใช่ JSON'
       );
 
     }
@@ -625,49 +327,20 @@ async function loadTickets() {
     );
 
 
-    /*
-     * ================================================
-     * ตรวจสอบ Worker
-     * ================================================
-     */
+    /* =================================================
+       FIND ACTUAL APPS SCRIPT RESULT
+    ================================================= */
+
+    let result = null;
+
+
+    // กรณี Worker ส่ง:
+    // { data: { ok:true, tickets:[] } }
 
     if (
-      workerResult.ok !== true
-    ) {
-
-      throw new Error(
-
-        workerResult.error ||
-
-        'Worker แจ้งข้อผิดพลาด'
-
-      );
-
-    }
-
-
-    /*
-     * ================================================
-     * Worker รุ่นใหม่
-     *
-     * {
-     *   ok: true,
-     *   data: {
-     *      ok: true,
-     *      count: 11,
-     *      tickets: [...]
-     *   }
-     * }
-     * ================================================
-     */
-
-    let result;
-
-
-    if (
+      workerResult &&
       workerResult.data &&
-      typeof workerResult.data ===
-        'object'
+      typeof workerResult.data === 'object'
     ) {
 
       result =
@@ -676,45 +349,53 @@ async function loadTickets() {
     }
 
 
-    /*
-     * ================================================
-     * Fallback
-     *
-     * รองรับ Worker รุ่นเก่า
-     * ================================================
-     */
+    // กรณี Worker ส่ง:
+    // { appsScriptResponse: "..." }
 
     else if (
+      workerResult &&
       workerResult.appsScriptResponse
     ) {
 
+      if (
+        typeof workerResult.appsScriptResponse ===
+        'string'
+      ) {
 
-      try {
+        try {
 
-        result =
-          JSON.parse(
-            workerResult
-              .appsScriptResponse
+          result =
+            JSON.parse(
+              workerResult.appsScriptResponse
+            );
+
+        }
+        catch (e) {
+
+          throw new Error(
+            'Apps Script Response ไม่ใช่ JSON'
           );
 
-      } catch (error) {
+        }
 
-        throw new Error(
-          'Apps Script Response ไม่ใช่ JSON ที่สมบูรณ์'
-        );
+      }
+      else {
+
+        result =
+          workerResult.appsScriptResponse;
 
       }
 
     }
 
 
-    /*
-     * ================================================
-     * กรณี Worker ส่ง Result ตรง
-     * ================================================
-     */
+    // กรณี Worker ส่ง Apps Script Response
+    // มาโดยตรง
 
-    else {
+    else if (
+      workerResult &&
+      Array.isArray(workerResult.tickets)
+    ) {
 
       result =
         workerResult;
@@ -722,197 +403,184 @@ async function loadTickets() {
     }
 
 
+    // กรณี response ซ้อนอีกชั้น
+    // เช่น { body: "..." }
+
+    else if (
+      workerResult &&
+      workerResult.body
+    ) {
+
+      if (
+        typeof workerResult.body ===
+        'string'
+      ) {
+
+        try {
+
+          result =
+            JSON.parse(
+              workerResult.body
+            );
+
+        }
+        catch (e) {
+
+          throw new Error(
+            'Body จาก Apps Script ไม่ใช่ JSON'
+          );
+
+        }
+
+      }
+      else {
+
+        result =
+          workerResult.body;
+
+      }
+
+    }
+
+
+    /* =================================================
+       VALIDATE RESULT
+    ================================================= */
+
+    if (!result) {
+
+      console.error(
+        'ไม่พบ Apps Script Response:',
+        workerResult
+      );
+
+      throw new Error(
+        'ไม่พบ Apps Script Response'
+      );
+
+    }
+
+
     console.log(
-      'FINAL MY TICKETS RESULT:',
+      'FINAL RESULT:',
       result
     );
 
 
-    /*
-     * ================================================
-     * ตรวจสอบ Result
-     * ================================================
-     */
-
-    if (!result) {
+    if (result.ok === false) {
 
       throw new Error(
-        'ไม่ได้รับข้อมูล Ticket'
+        result.error ||
+        result.message ||
+        'Apps Script แจ้งข้อผิดพลาด'
       );
 
     }
 
 
     if (
-      result.ok !== true
+      !Array.isArray(
+        result.tickets
+      )
     ) {
 
       throw new Error(
-
-        result.error ||
-
-        'Apps Script แจ้งข้อผิดพลาด'
-
+        'ไม่พบข้อมูล Ticket ใน Response'
       );
 
     }
 
 
-    /*
-     * ================================================
-     * Render
-     * ================================================
-     */
-
-    renderResult(
-      result
+    renderTickets(
+      result.tickets
     );
 
-
-  } catch (error) {
-
+  }
+  catch (error) {
 
     console.error(
-      'MY TICKETS ERROR:',
+      'loadTickets error:',
       error
     );
-
 
     showError(
-      error
+      escapeHtml(
+        error.message ||
+        String(error)
+      )
     );
+
+  }
+  finally {
+
+    document.getElementById('loading').style.display =
+      'none';
 
   }
 
 }
 
 
-
 /* =====================================================
-   RENDER RESULT
+   RENDER TICKETS
 ===================================================== */
 
-function renderResult(
-  result
-) {
-
+function renderTickets(tickets) {
 
   const content =
-    document.getElementById(
-      'content'
-    );
+    document.getElementById('content');
 
-
-  const tickets =
-    Array.isArray(
-      result.tickets
-    )
-
-      ? result.tickets
-
-      : [];
-
-
-  /*
-   * ================================================
-   * ไม่มี Ticket
-   * ================================================
-   */
 
   if (
+    !tickets ||
     tickets.length === 0
   ) {
 
-
     content.innerHTML = `
-
-      <div class="message">
-
-        <div
-          style="font-size:42px"
-        >
-          📭
+      <div class="empty">
+        <div style="font-size:40px;">📭</div>
+        <h3>ยังไม่มี Ticket</h3>
+        <div>
+          ยังไม่พบ Ticket ที่สร้างจาก LINE Account นี้
         </div>
-
-        <strong>
-          ยังไม่มี Ticket
-        </strong>
-
-        <p
-          style="color:#777"
-        >
-          ระบบเชื่อมต่อ API สำเร็จ<br>
-          แต่ยังไม่พบ Ticket
-          ของ LINE Account นี้
-        </p>
-
       </div>
-
-
-      <div class="debug">
-
-        <strong>
-          🔎 API RESPONSE
-        </strong>
-
-        <br><br>
-
-        count:
-        ${
-          escapeHtml(
-            result.count ??
-            0
-          )
-        }
-
-      </div>
-
     `;
-
 
     return;
 
   }
 
 
-  /*
-   * ================================================
-   * Summary
-   * ================================================
-   */
-
   let html = `
 
     <div class="summary">
-
       📋 พบ Ticket ทั้งหมด
-
-      <strong>
-        ${
-          tickets.length
-        }
-      </strong>
-
+      ${tickets.length}
       รายการ
-
     </div>
 
   `;
 
 
-  /*
-   * ================================================
-   * Ticket Cards
-   * ================================================
-   */
+  tickets.forEach(function(ticket) {
 
-  html +=
+    html += createTicketCard(
+      ticket
+    );
 
-    tickets
-      .map(
-        createTicketCard
-      )
-      .join('');
+  });
+
+
+  html += `
+
+    <button
+      class="refresh"
+      onclick="loadTickets()"
+    >
+      🔄 โหลดข้อมูลใหม่
+    </button>
+
+  `;
 
 
   content.innerHTML =
@@ -921,228 +589,155 @@ function renderResult(
 }
 
 
-
 /* =====================================================
-   CREATE TICKET CARD
+   TICKET CARD
 ===================================================== */
 
-function createTicketCard(
-  ticket
-) {
-
+function createTicketCard(ticket) {
 
   const status =
-    ticket.status ||
-    '-';
+    String(
+      ticket.status || ''
+    );
+
+  const statusClass =
+    getStatusClass(status);
 
 
   return `
 
     <div class="ticket">
 
-
-      <div class="ticket-header">
-
-
-        <div class="ticket-id">
-
-          🎫
-
-          ${
-            escapeHtml(
-              ticket.ticketId
-            )
-          }
-
-        </div>
-
-
-        <div
-          class="status ${
-            getStatusClass(
-              status
-            )
-          }"
-        >
-
-          ${
-            getStatusText(
-              status
-            )
-          }
-
-        </div>
-
-
+      <div class="ticket-id">
+        🎫 ${escapeHtml(
+          ticket.ticketId || '-'
+        )}
       </div>
-
 
       <div class="row">
-
         <span class="label">
-          📅 วันที่แจ้ง:
+          วันที่:
         </span>
-
-        ${
-          escapeHtml(
-            formatDate(
-              ticket.createdAt
-            )
-          )
-        }
-
+        ${formatDate(
+          ticket.createdAt
+        )}
       </div>
-
 
       <div class="row">
-
         <span class="label">
-          🏥 สาขา:
+          สาขา:
         </span>
-
-        ${
-          escapeHtml(
-            ticket.branch
-          )
-        }
-
+        ${escapeHtml(
+          ticket.branch || '-'
+        )}
       </div>
-
 
       <div class="row">
-
         <span class="label">
-          📂 ประเภท:
+          หมวดหมู่:
         </span>
-
-        ${
-          escapeHtml(
-            ticket.category
-          )
-        }
-
+        ${escapeHtml(
+          ticket.category || '-'
+        )}
       </div>
-
 
       <div class="row">
-
         <span class="label">
-          ⚠️ Priority:
+          Priority:
         </span>
-
-        ${
-          escapeHtml(
-            ticket.priority
-          )
-        }
-
+        ${escapeHtml(
+          ticket.priority || '-'
+        )}
       </div>
-
 
       <div class="row">
-
         <span class="label">
-          👨‍💻 ผู้รับผิดชอบ:
+          สถานะ:
         </span>
 
-        ${
-          escapeHtml(
-            ticket.assignee ||
-            '-'
-          )
-        }
-
+        <span class="status ${statusClass}">
+          ${escapeHtml(
+            status || '-'
+          )}
+        </span>
       </div>
-
 
       <div class="row">
-
         <span class="label">
-          ⏰ SLA Due:
+          ผู้รับผิดชอบ:
         </span>
-
-        ${
-          escapeHtml(
-            formatDate(
-              ticket.slaDue
-            )
-          )
-        }
-
+        ${escapeHtml(
+          ticket.assignee || '-'
+        )}
       </div>
 
+      <div class="row">
+        <span class="label">
+          SLA Due:
+        </span>
+        ${formatDate(
+          ticket.slaDue
+        )}
+      </div>
 
       <div class="problem">
 
         <strong>
-          📝 ปัญหา
+          ปัญหา
         </strong>
 
-        <br><br>
+        <br>
 
-        ${
-          escapeHtml(
-            ticket.problem
-          )
-        }
+        ${escapeHtml(
+          ticket.problem || '-'
+        )}
 
       </div>
 
 
       ${
         ticket.resolution
-
           ? `
 
-            <div class="problem">
+            <div class="resolution">
 
               <strong>
-                🔧 วิธีแก้ไข
+                วิธีแก้ไข
               </strong>
 
-              <br><br>
+              <br>
 
-              ${
-                escapeHtml(
-                  ticket.resolution
-                )
-              }
+              ${escapeHtml(
+                ticket.resolution
+              )}
 
             </div>
 
           `
-
           : ''
       }
 
 
       ${
         ticket.satisfaction
-
           ? `
 
-            <div
-              class="row"
-              style="margin-top:14px"
-            >
+            <div class="row"
+                 style="margin-top:12px;">
 
               <span class="label">
-                ⭐ ความพึงพอใจ:
+                คะแนน:
               </span>
 
-              ${
-                escapeHtml(
-                  ticket.satisfaction
-                )
-              }/5
+              ⭐ ${escapeHtml(
+                ticket.satisfaction
+              )}
 
             </div>
 
           `
-
           : ''
       }
-
 
     </div>
 
@@ -1151,258 +746,150 @@ function createTicketCard(
 }
 
 
-
 /* =====================================================
    STATUS CLASS
 ===================================================== */
 
-function getStatusClass(
-  status
-) {
-
+function getStatusClass(status) {
 
   switch (
-    status
+    String(status)
+      .toLowerCase()
   ) {
 
+    case 'open':
+      return 'status-open';
 
-    case 'Open':
+    case 'in progress':
+      return 'status-progress';
 
-      return 'open';
+    case 'pending':
+      return 'status-pending';
 
+    case 'resolved':
+      return 'status-resolved';
 
-    case 'In Progress':
-
-      return 'progress';
-
-
-    case 'Pending':
-
-      return 'pending';
-
-
-    case 'Resolved':
-
-      return 'resolved';
-
-
-    case 'Closed':
-
-      return 'closed';
-
+    case 'closed':
+      return 'status-closed';
 
     default:
-
-      return 'closed';
+      return 'status-pending';
 
   }
 
 }
 
 
-
 /* =====================================================
-   STATUS TEXT
+   DATE
 ===================================================== */
 
-function getStatusText(
-  status
-) {
-
-
-  switch (
-    status
-  ) {
-
-
-    case 'Open':
-
-      return '🟡 เปิดเคส';
-
-
-    case 'In Progress':
-
-      return '🔵 กำลังดำเนินการ';
-
-
-    case 'Pending':
-
-      return '🟠 รอดำเนินการ';
-
-
-    case 'Resolved':
-
-      return '🟢 แก้ไขแล้ว';
-
-
-    case 'Closed':
-
-      return '✅ ปิดแล้ว';
-
-
-    default:
-
-      return status || '-';
-
-  }
-
-}
-
-
-
-/* =====================================================
-   FORMAT DATE
-===================================================== */
-
-function formatDate(
-  value
-) {
-
+function formatDate(value) {
 
   if (!value) {
-
     return '-';
-
   }
 
+  try {
 
-  const date =
-    new Date(
-      value
-    );
+    const date =
+      new Date(value);
 
+    if (
+      isNaN(
+        date.getTime()
+      )
+    ) {
 
-  if (
-    isNaN(
-      date.getTime()
-    )
-  ) {
-
-    return String(
-      value
-    );
-
-  }
-
-
-  return date.toLocaleString(
-
-    'th-TH',
-
-    {
-
-      day:
-        '2-digit',
-
-      month:
-        '2-digit',
-
-      year:
-        'numeric',
-
-      hour:
-        '2-digit',
-
-      minute:
-        '2-digit'
+      return escapeHtml(
+        String(value)
+      );
 
     }
 
-  );
+    return date.toLocaleString(
+      'th-TH',
+      {
+        dateStyle: 'medium',
+        timeStyle: 'short'
+      }
+    );
+
+  }
+  catch (e) {
+
+    return escapeHtml(
+      String(value)
+    );
+
+  }
 
 }
-
 
 
 /* =====================================================
-   SHOW ERROR
+   ERROR
 ===================================================== */
 
-function showError(
-  error
-) {
+function showError(message) {
 
+  document.getElementById('loading').style.display =
+    'none';
 
-  const message =
-    error &&
-    error.message
+  document.getElementById('error').innerHTML = `
 
-      ? error.message
+    <div class="error">
 
-      : String(
-          error
-        );
+      ❌ ${message}
 
+      <br><br>
 
-  document
-    .getElementById(
-      'content'
-    )
-    .innerHTML = `
+      <button
+        class="refresh"
+        onclick="loadTickets()"
+      >
+        🔄 ลองใหม่
+      </button>
 
-      <div class="message">
+    </div>
 
-        <div
-          style="font-size:40px"
-        >
-          ⚠️
-        </div>
-
-        <strong
-          class="error"
-        >
-          เกิดข้อผิดพลาด
-        </strong>
-
-        <p>
-          ${
-            escapeHtml(
-              message
-            )
-          }
-        </p>
-
-      </div>
-
-    `;
+  `;
 
 }
-
 
 
 /* =====================================================
    ESCAPE HTML
 ===================================================== */
 
-function escapeHtml(
-  value
-) {
+function escapeHtml(value) {
 
+  if (
+    value === null ||
+    value === undefined
+  ) {
 
-  return String(
-    value ?? ''
-  )
+    return '';
 
+  }
+
+  return String(value)
     .replace(
       /&/g,
       '&amp;'
     )
-
     .replace(
       /</g,
       '&lt;'
     )
-
     .replace(
       />/g,
       '&gt;'
     )
-
     .replace(
       /"/g,
       '&quot;'
     )
-
     .replace(
       /'/g,
       '&#039;'
@@ -1411,17 +898,13 @@ function escapeHtml(
 }
 
 
-
 /* =====================================================
    START
 ===================================================== */
 
 init();
 
-
 </script>
 
-
 </body>
-
 </html>
