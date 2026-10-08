@@ -264,7 +264,10 @@ async function loadTickets() {
     const result =
       await response.json();
 
-    console.log('My Tickets response:', result);
+    console.log(
+  'MY TICKETS RESULT:',
+  JSON.stringify(result)
+);
 
     if (!result.ok) {
 
