@@ -268,35 +268,78 @@ async function loadTickets() {
       });
 
     const text =
-      await response.text();
+  await response.text();
 
-    console.log(
-      'MY TICKETS RAW RESPONSE:',
-      text
-    );
+console.log(
+  'MY TICKETS RAW RESPONSE:',
+  text
+);
 
-    let result;
+let workerResult;
 
-    try {
+try {
 
-      result =
-        JSON.parse(text);
+  workerResult =
+    JSON.parse(text);
 
-    } catch (error) {
+} catch (error) {
 
-      throw new Error(
-        'API ไม่ได้ส่ง JSON กลับมา: ' +
-        text.substring(0, 500)
+  throw new Error(
+    'Worker ไม่ได้ส่ง JSON กลับมา: ' +
+    text.substring(0, 500)
+  );
+
+}
+
+console.log(
+  'WORKER RESULT:',
+  workerResult
+);
+
+
+/* =====================================================
+   WORKER ส่ง Apps Script Response มาเป็น JSON String
+   จึงต้อง Parse อีก 1 รอบ
+===================================================== */
+
+let result;
+
+if (
+  workerResult &&
+  typeof workerResult.appsScriptResponse === 'string'
+) {
+
+  try {
+
+    result =
+      JSON.parse(
+        workerResult.appsScriptResponse
       );
 
-    }
+  } catch (error) {
 
-    console.log(
-      'MY TICKETS RESULT:',
-      result
+    throw new Error(
+      'Apps Script Response ไม่ใช่ JSON: ' +
+      workerResult.appsScriptResponse
+        .substring(0, 500)
     );
 
-    renderResult(result);
+  }
+
+} else {
+
+  result =
+    workerResult;
+
+}
+
+
+console.log(
+  'FINAL MY TICKETS RESULT:',
+  result
+);
+
+renderResult(result);
 
   } catch (error) {
 
