@@ -1,524 +1,968 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
 
-<title>ประเมินความพึงพอใจ - Dr.Orn IT Helpdesk</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <title>Dr.Orn IT Helpdesk - Survey</title>
 
-<style>
-* {
-  box-sizing: border-box;
-}
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
-body {
-  margin: 0;
-  padding: 20px;
-  font-family: Arial, "Noto Sans Thai", sans-serif;
-  background: #f5f6f8;
-  color: #222;
-}
+  <style>
 
-.container {
-  max-width: 520px;
-  margin: 0 auto;
-}
+    * {
+      box-sizing: border-box;
+    }
 
-.card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 16px rgba(0,0,0,.08);
-}
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+      font-family:
+        Arial,
+        "Noto Sans Thai",
+        sans-serif;
+      color: #222;
+    }
 
-h1 {
-  margin-top: 0;
-  font-size: 22px;
-}
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow:
+        0 4px 20px rgba(0,0,0,0.08);
+    }
 
-.ticket {
-  background: #f1f3f5;
-  border-radius: 10px;
-  padding: 14px;
-  margin-bottom: 24px;
-  font-weight: bold;
-}
+    .logo {
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
 
-.question {
-  font-size: 18px;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 18px;
-}
+    .subtitle {
+      text-align: center;
+      color: #777;
+      margin-bottom: 24px;
+    }
 
-.stars {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 24px;
-}
+    .ticket {
+      background: #f7f7f7;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 24px;
+      text-align: center;
+    }
 
-.star {
-  border: 0;
-  background: transparent;
-  font-size: 38px;
-  cursor: pointer;
-  padding: 4px;
-  opacity: .35;
-}
+    .ticket-label {
+      font-size: 13px;
+      color: #777;
+      margin-bottom: 5px;
+    }
 
-.star.selected {
-  opacity: 1;
-}
+    .ticket-id {
+      font-size: 20px;
+      font-weight: bold;
+    }
 
-textarea {
-  width: 100%;
-  min-height: 120px;
-  padding: 12px;
-  border: 1px solid #d0d4d9;
-  border-radius: 10px;
-  font-size: 16px;
-  resize: vertical;
-}
+    .question {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 16px;
+      text-align: center;
+    }
 
-label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: bold;
-}
+    .stars {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
 
-button.submit {
-  width: 100%;
-  margin-top: 18px;
-  padding: 14px;
-  border: 0;
-  border-radius: 10px;
-  background: #222;
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-}
+    .star {
+      border: none;
+      background: none;
+      font-size: 42px;
+      cursor: pointer;
+      padding: 0;
+      opacity: 0.35;
+      transition: 0.2s;
+    }
 
-button.submit:disabled {
-  opacity: .5;
-}
+    .star.active {
+      opacity: 1;
+      transform: scale(1.08);
+    }
 
-.status {
-  margin-top: 16px;
-  text-align: center;
-  line-height: 1.6;
-}
+    .rating-text {
+      text-align: center;
+      min-height: 24px;
+      color: #666;
+      margin-bottom: 24px;
+    }
 
-.success {
-  color: #16803c;
-}
+    textarea {
+      width: 100%;
+      min-height: 110px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 15px;
+      resize: vertical;
+      margin-bottom: 18px;
+      font-family: inherit;
+    }
 
-.error {
-  color: #c62828;
-}
-</style>
+    button.submit {
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #222;
+      color: white;
+    }
+
+    button.submit:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .message {
+      text-align: center;
+      padding: 20px 10px;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .success {
+      color: #16803c;
+    }
+
+    .error {
+      color: #c62828;
+    }
+
+    .loading {
+      color: #666;
+    }
+
+  </style>
 </head>
 
 <body>
 
-<div class="container">
+  <div class="container">
 
-  <div class="card">
-
-    <h1>⭐ ประเมินความพึงพอใจ</h1>
-
-    <div id="ticketBox" class="ticket">
-      กำลังโหลด Ticket...
+    <div class="logo">
+      Dr.Orn IT Helpdesk
     </div>
 
-    <div class="question">
-      คุณพึงพอใจกับการให้บริการ IT มากน้อยเพียงใด?
+    <div class="subtitle">
+      แบบประเมินความพึงพอใจ
     </div>
 
-    <div class="stars">
-
-      <button class="star" data-rating="1">★</button>
-      <button class="star" data-rating="2">★</button>
-      <button class="star" data-rating="3">★</button>
-      <button class="star" data-rating="4">★</button>
-      <button class="star" data-rating="5">★</button>
-
+    <div id="loading" class="message loading">
+      กำลังโหลดข้อมูล...
     </div>
 
-    <label for="comment">
-      ความคิดเห็นเพิ่มเติม
-    </label>
+    <div id="content" style="display:none;">
 
-    <textarea
-      id="comment"
-      placeholder="ความคิดเห็นเพิ่มเติม (ถ้ามี)"
-    ></textarea>
+      <div class="ticket">
 
-    <button
-      id="submitButton"
-      class="submit"
-      onclick="submitSurvey()"
-      disabled
-    >
-      ⭐ ส่งแบบประเมิน
-    </button>
+        <div class="ticket-label">
+          Ticket ID
+        </div>
 
-    <div id="status" class="status">
-      กำลังตรวจสอบผู้ใช้งาน...
+        <div
+          id="ticketId"
+          class="ticket-id"
+        >
+        </div>
+
+      </div>
+
+      <div class="question">
+        คุณพึงพอใจกับการให้บริการ IT มากน้อยเพียงใด?
+      </div>
+
+      <div class="stars">
+
+        <button
+          class="star"
+          data-rating="1"
+          type="button"
+        >
+          ★
+        </button>
+
+        <button
+          class="star"
+          data-rating="2"
+          type="button"
+        >
+          ★
+        </button>
+
+        <button
+          class="star"
+          data-rating="3"
+          type="button"
+        >
+          ★
+        </button>
+
+        <button
+          class="star"
+          data-rating="4"
+          type="button"
+        >
+          ★
+        </button>
+
+        <button
+          class="star"
+          data-rating="5"
+          type="button"
+        >
+          ★
+        </button>
+
+      </div>
+
+      <div
+        id="ratingText"
+        class="rating-text"
+      >
+        กรุณาเลือกคะแนน
+      </div>
+
+      <textarea
+        id="comment"
+        placeholder="ความคิดเห็นเพิ่มเติม (ถ้ามี)"
+      ></textarea>
+
+      <button
+        id="submitBtn"
+        class="submit"
+        type="button"
+        disabled
+      >
+        ส่งแบบประเมิน
+      </button>
+
     </div>
 
   </div>
 
-</div>
 
-<script>
+  <script>
 
-/* =====================================================
-   CONFIG
-===================================================== */
+    /* =====================================================
+       CONFIG
+    ===================================================== */
 
-const LIFF_ID = '2011909669-UKBDfE5E';
+    const LIFF_ID =
+      '2011909669-UKBDfE5E';
 
-const API_URL =
-  'https://drorn-it-helpdesk-webhook.nattima-p.workers.dev';
-
-
-/* =====================================================
-   GLOBAL
-===================================================== */
-
-let currentTicketId = '';
-let currentUserId = '';
-let selectedRating = 0;
+    const API_URL =
+      'https://drorn-it-helpdesk-webhook.nattima-p.workers.dev';
 
 
-/* =====================================================
-   STAR RATING
-===================================================== */
+    /* =====================================================
+       GLOBAL
+    ===================================================== */
 
-document
-  .querySelectorAll('.star')
-  .forEach(function(star) {
+    let currentUserId = '';
+    let currentTicketId = '';
+    let selectedRating = 0;
 
-    star.addEventListener(
-      'click',
-      function() {
 
-        selectedRating =
-          Number(
-            this.dataset.rating
+    /* =====================================================
+       INIT
+    ===================================================== */
+
+    async function init() {
+
+      try {
+
+        showLoading(
+          'กำลังเชื่อมต่อ LINE...'
+        );
+
+
+        /* -----------------------------------------------
+           LIFF INIT
+        ----------------------------------------------- */
+
+        await liff.init({
+          liffId: LIFF_ID
+        });
+
+
+        /* -----------------------------------------------
+           LOGIN
+        ----------------------------------------------- */
+
+        if (!liff.isLoggedIn()) {
+
+          liff.login();
+
+          return;
+
+        }
+
+
+        /* -----------------------------------------------
+           GET PROFILE
+        ----------------------------------------------- */
+
+        const profile =
+          await liff.getProfile();
+
+        currentUserId =
+          profile.userId || '';
+
+
+        if (!currentUserId) {
+
+          throw new Error(
+            'ไม่พบ LINE User ID'
           );
 
-        updateStars();
+        }
+
+
+        /* -----------------------------------------------
+           GET TICKET ID
+        ----------------------------------------------- */
+
+        currentTicketId =
+          getTicketId();
+
+
+        console.log(
+          'Ticket ID:',
+          currentTicketId
+        );
+
+
+        console.log(
+          'Current URL:',
+          window.location.href
+        );
+
+
+        console.log(
+          'Search:',
+          window.location.search
+        );
+
+
+        if (!currentTicketId) {
+
+          throw new Error(
+            'ไม่พบ Ticket ID'
+          );
+
+        }
+
+
+        /* -----------------------------------------------
+           SHOW FORM
+        ----------------------------------------------- */
 
         document.getElementById(
-          'submitButton'
-        ).disabled = false;
-
-      }
-    );
-
-  });
+          'ticketId'
+        ).textContent =
+          currentTicketId;
 
 
-function updateStars() {
+        document.getElementById(
+          'loading'
+        ).style.display =
+          'none';
 
-  document
-    .querySelectorAll('.star')
-    .forEach(function(star) {
 
-      const rating =
-        Number(
-          star.dataset.rating
+        document.getElementById(
+          'content'
+        ).style.display =
+          'block';
+
+
+        setupStars();
+
+      } catch (error) {
+
+        console.error(
+          'Survey init error:',
+          error
         );
 
-      if (
-        rating <= selectedRating
-      ) {
 
-        star.classList.add(
-          'selected'
-        );
-
-      } else {
-
-        star.classList.remove(
-          'selected'
+        showError(
+          error.message ||
+          'เกิดข้อผิดพลาด'
         );
 
       }
 
-    });
-
-}
+    }
 
 
-/* =====================================================
-   INIT
-===================================================== */
+    /* =====================================================
+       GET TICKET ID
+    ===================================================== */
 
-async function init() {
+    function getTicketId() {
 
-  const status =
-    document.getElementById(
-      'status'
-    );
+      /*
+       * วิธีที่ 1
+       * อ่านจาก URL ปกติ
+       */
 
-  try {
-
-    status.textContent =
-      'กำลังเปิดระบบ...';
-
-    await liff.init({
-      liffId: LIFF_ID
-    });
+      const params =
+        new URLSearchParams(
+          window.location.search
+        );
 
 
-    if (!liff.isLoggedIn()) {
+      let ticketId =
+        params.get('ticketId') ||
+        '';
 
-      liff.login();
 
-      return;
+      if (ticketId) {
+
+        return ticketId;
+
+      }
+
+
+      /*
+       * วิธีที่ 2
+       * รองรับ LIFF state
+       */
+
+      const liffState =
+        params.get('liff.state');
+
+
+      if (liffState) {
+
+        console.log(
+          'LIFF state:',
+          liffState
+        );
+
+
+        try {
+
+          /*
+           * กรณี liff.state เป็น
+           * ?ticketId=IT-xxxx
+           */
+
+          let state =
+            liffState;
+
+
+          if (
+            state.startsWith('?')
+          ) {
+
+            state =
+              state.substring(1);
+
+          }
+
+
+          const stateParams =
+            new URLSearchParams(
+              state
+            );
+
+
+          ticketId =
+            stateParams.get(
+              'ticketId'
+            ) || '';
+
+
+          if (ticketId) {
+
+            return ticketId;
+
+          }
+
+
+          /*
+           * กรณี liff.state มี path
+           * เช่น /survey.html?ticketId=...
+           */
+
+          const questionIndex =
+            liffState.indexOf('?');
+
+
+          if (questionIndex >= 0) {
+
+            const queryString =
+              liffState.substring(
+                questionIndex + 1
+              );
+
+
+            const queryParams =
+              new URLSearchParams(
+                queryString
+              );
+
+
+            ticketId =
+              queryParams.get(
+                'ticketId'
+              ) || '';
+
+
+            if (ticketId) {
+
+              return ticketId;
+
+            }
+
+          }
+
+        } catch (error) {
+
+          console.error(
+            'LIFF state parse error:',
+            error
+          );
+
+        }
+
+      }
+
+
+      /*
+       * วิธีที่ 3
+       * ตรวจสอบ LIFF state จาก
+       * liff.getDecodedIDToken()
+       * เผื่อกรณี LIFF redirect
+       */
+
+      try {
+
+        const decodedToken =
+          liff.getDecodedIDToken();
+
+        console.log(
+          'Decoded ID Token:',
+          decodedToken
+        );
+
+      } catch (error) {
+
+        console.log(
+          'No decoded token'
+        );
+
+      }
+
+
+      return '';
 
     }
 
 
-    const profile =
-      await liff.getProfile();
+    /* =====================================================
+       STAR RATING
+    ===================================================== */
+
+    function setupStars() {
+
+      const stars =
+        document.querySelectorAll(
+          '.star'
+        );
 
 
-    const params =
-      new URLSearchParams(
-        window.location.search
-      );
+      stars.forEach(
+        function(star) {
+
+          star.addEventListener(
+            'click',
+            function() {
+
+              selectedRating =
+                Number(
+                  this.dataset.rating
+                );
 
 
-    const ticketId =
-      params.get('ticketId');
+              updateStars();
 
+            }
+          );
 
-    if (!ticketId) {
-
-      throw new Error(
-        'ไม่พบ Ticket ID'
+        }
       );
 
     }
 
 
-    currentTicketId =
-      ticketId;
+    /* =====================================================
+       UPDATE STARS
+    ===================================================== */
 
-    currentUserId =
-      profile.userId;
+    function updateStars() {
 
-
-    document.getElementById(
-      'ticketBox'
-    ).textContent =
-      '🎫 Ticket: ' +
-      currentTicketId;
+      const stars =
+        document.querySelectorAll(
+          '.star'
+        );
 
 
-    status.textContent =
-      'ผู้ประเมิน: ' +
-      (profile.displayName || 'ผู้ใช้งาน');
+      stars.forEach(
+        function(star) {
+
+          const rating =
+            Number(
+              star.dataset.rating
+            );
 
 
-  } catch (error) {
+          if (
+            rating <= selectedRating
+          ) {
 
-    console.error(
-      'INIT ERROR:',
-      error
-    );
+            star.classList.add(
+              'active'
+            );
 
-    status.innerHTML =
-      '<span class="error">' +
-      '❌ ' +
-      (error.message || error) +
-      '</span>';
+          } else {
 
-  }
+            star.classList.remove(
+              'active'
+            );
 
-}
+          }
 
-
-/* =====================================================
-   SUBMIT SURVEY
-===================================================== */
-
-async function submitSurvey() {
-
-  if (!selectedRating) {
-
-    alert(
-      'กรุณาเลือกคะแนน 1-5 ดาว'
-    );
-
-    return;
-
-  }
-
-
-  const button =
-    document.getElementById(
-      'submitButton'
-    );
-
-  const status =
-    document.getElementById(
-      'status'
-    );
-
-  const comment =
-    document.getElementById(
-      'comment'
-    ).value.trim();
-
-
-  button.disabled = true;
-
-  status.textContent =
-    'กำลังบันทึกแบบประเมิน...';
-
-
-  try {
-
-    const payload = {
-
-      action: 'survey',
-
-      ticketId:
-        currentTicketId,
-
-      lineUserId:
-        currentUserId,
-
-      rating:
-        selectedRating,
-
-      comment:
-        comment
-
-    };
-
-
-    const response =
-      await fetch(
-        API_URL,
-        {
-          method: 'POST',
-
-          headers: {
-            'Content-Type':
-              'text/plain;charset=utf-8'
-          },
-
-          body:
-            JSON.stringify(payload),
-
-          redirect:
-            'follow'
         }
       );
 
 
-    const responseText =
-      await response.text();
-
-
-    if (!response.ok) {
-
-      throw new Error(
-        'HTTP ' +
-        response.status +
-        ': ' +
-        responseText
-      );
-
-    }
-
-
-    let result;
-
-    try {
-
-      result =
-        JSON.parse(
-          responseText
+      const ratingText =
+        document.getElementById(
+          'ratingText'
         );
 
-    } catch (jsonError) {
 
-      throw new Error(
-        'Backend ไม่ได้ส่ง JSON กลับมา'
-      );
+      const texts = {
+
+        1: '😞 ไม่พอใจมาก',
+
+        2: '😕 ไม่ค่อยพอใจ',
+
+        3: '😐 ปานกลาง',
+
+        4: '🙂 พอใจ',
+
+        5: '😍 พอใจมาก'
+
+      };
+
+
+      ratingText.textContent =
+        texts[selectedRating] ||
+        'กรุณาเลือกคะแนน';
+
+
+      document.getElementById(
+        'submitBtn'
+      ).disabled =
+        selectedRating === 0;
 
     }
 
 
-    if (!result.ok) {
-
-      throw new Error(
-        result.error ||
-        result.message ||
-        'ไม่สามารถบันทึกแบบประเมินได้'
-      );
-
-    }
-
-
-    status.innerHTML =
-      '<span class="success">' +
-      '✅ ขอบคุณสำหรับการประเมินค่ะ' +
-      '<br><br>' +
-      'ความคิดเห็นของคุณถูกบันทึกเรียบร้อยแล้ว' +
-      '</span>';
-
+    /* =====================================================
+       SUBMIT SURVEY
+    ===================================================== */
 
     document.getElementById(
-      'comment'
-    ).disabled = true;
-
-
-    document
-      .querySelectorAll('.star')
-      .forEach(function(star) {
-        star.disabled = true;
-      });
-
-
-    button.style.display =
-      'none';
-
-
-  } catch (error) {
-
-    console.error(
-      'SURVEY ERROR:',
-      error
+      'submitBtn'
+    ).addEventListener(
+      'click',
+      submitSurvey
     );
 
-    button.disabled = false;
 
-    status.innerHTML =
-      '<span class="error">' +
-      '❌ ส่งแบบประเมินไม่สำเร็จ' +
-      '<br><br>' +
-      (error.message || error) +
-      '</span>';
+    async function submitSurvey() {
 
-  }
+      if (!currentTicketId) {
 
-}
+        showError(
+          'ไม่พบ Ticket ID'
+        );
+
+        return;
+
+      }
 
 
-init();
+      if (!currentUserId) {
 
-</script>
+        showError(
+          'ไม่พบ LINE User ID'
+        );
+
+        return;
+
+      }
+
+
+      if (
+        selectedRating < 1 ||
+        selectedRating > 5
+      ) {
+
+        showError(
+          'กรุณาเลือกคะแนน'
+        );
+
+        return;
+
+      }
+
+
+      const comment =
+        document.getElementById(
+          'comment'
+        ).value.trim();
+
+
+      const submitBtn =
+        document.getElementById(
+          'submitBtn'
+        );
+
+
+      submitBtn.disabled =
+        true;
+
+
+      submitBtn.textContent =
+        'กำลังบันทึก...';
+
+
+      try {
+
+        const payload = {
+
+          action:
+            'survey',
+
+          ticketId:
+            currentTicketId,
+
+          lineUserId:
+            currentUserId,
+
+          rating:
+            selectedRating,
+
+          comment:
+            comment
+
+        };
+
+
+        console.log(
+          'Survey payload:',
+          payload
+        );
+
+
+        const response =
+          await fetch(
+            API_URL,
+            {
+              method: 'POST',
+
+              headers: {
+                'Content-Type':
+                  'text/plain;charset=utf-8'
+              },
+
+              body:
+                JSON.stringify(
+                  payload
+                ),
+
+              redirect:
+                'follow'
+            }
+          );
+
+
+        const result =
+          await response.json();
+
+
+        console.log(
+          'Survey response:',
+          result
+        );
+
+
+        if (
+          !result.ok
+        ) {
+
+          throw new Error(
+            result.error ||
+            result.message ||
+            'ไม่สามารถบันทึกแบบประเมินได้'
+          );
+
+        }
+
+
+        showSuccess(
+          'บันทึกแบบประเมินเรียบร้อยแล้ว<br><br>' +
+          'ขอบคุณสำหรับความคิดเห็นค่ะ ❤️'
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          'Submit survey error:',
+          error
+        );
+
+
+        submitBtn.disabled =
+          false;
+
+
+        submitBtn.textContent =
+          'ส่งแบบประเมิน';
+
+
+        showError(
+          error.message ||
+          'เกิดข้อผิดพลาดในการส่งแบบประเมิน'
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       UI
+    ===================================================== */
+
+    function showLoading(
+      message
+    ) {
+
+      const loading =
+        document.getElementById(
+          'loading'
+        );
+
+
+      loading.className =
+        'message loading';
+
+
+      loading.innerHTML =
+        message;
+
+    }
+
+
+    function showError(
+      message
+    ) {
+
+      document.getElementById(
+        'loading'
+      ).style.display =
+        'block';
+
+
+      document.getElementById(
+        'content'
+      ).style.display =
+        'none';
+
+
+      const loading =
+        document.getElementById(
+          'loading'
+        );
+
+
+      loading.className =
+        'message error';
+
+
+      loading.innerHTML =
+        '❌ ' + message;
+
+    }
+
+
+    function showSuccess(
+      message
+    ) {
+
+      document.getElementById(
+        'content'
+      ).style.display =
+        'none';
+
+
+      const loading =
+        document.getElementById(
+          'loading'
+        );
+
+
+      loading.style.display =
+        'block';
+
+
+      loading.className =
+        'message success';
+
+
+      loading.innerHTML =
+        '✅ ' + message;
+
+    }
+
+
+    /* =====================================================
+       START
+    ===================================================== */
+
+    init();
+
+  </script>
 
 </body>
 </html>
