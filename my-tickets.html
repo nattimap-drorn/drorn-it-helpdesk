@@ -280,20 +280,33 @@ async function loadTickets() {
 
     renderTickets(tickets);
 
-  } catch (error) {
+if (result.debug) {
+  console.log('MY TICKETS DEBUG:', result.debug);
 
-    console.error(error);
+  const debugBox = document.createElement('div');
 
-    showError(
-      'เกิดข้อผิดพลาด<br>' +
-      escapeHtml(
-        error.message ||
-        String(error)
-      )
-    );
+  debugBox.style.cssText =
+    'background:#fff3cd;' +
+    'border:1px solid #ffe69c;' +
+    'border-radius:12px;' +
+    'padding:14px;' +
+    'margin-top:14px;' +
+    'font-size:13px;';
 
-  }
+  debugBox.innerHTML =
+    '<strong>🔎 Debug</strong><br>' +
+    'จำนวนแถวใน Sheet: ' +
+    result.debug.totalRows +
+    '<br>' +
+    'LINE ID ที่ได้รับ (6 ตัวท้าย): ' +
+    result.debug.receivedUserIdLast6 +
+    '<br>' +
+    'Ticket ที่ตรงกัน: ' +
+    result.debug.matchedTickets;
 
+  document
+    .getElementById('content')
+    .appendChild(debugBox);
 }
 
 /* =====================================================
