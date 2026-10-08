@@ -326,11 +326,26 @@ function renderResult(result) {
 
   }
 
+  const raw =
+    JSON.stringify(
+      result,
+      null,
+      2
+    );
+
+  const tickets =
+    Array.isArray(result.tickets)
+      ? result.tickets
+      : [];
+
   if (result.ok !== true) {
 
     content.innerHTML = `
       <div class="message">
-        <div style="font-size:40px">⚠️</div>
+
+        <div style="font-size:40px">
+          ⚠️
+        </div>
 
         <strong>
           API แจ้งข้อผิดพลาด
@@ -341,17 +356,23 @@ function renderResult(result) {
             result.error || 'Unknown error'
           )}
         </p>
+
+        <div class="debug">
+          <strong>API RAW RESPONSE</strong>
+
+          <pre style="
+            text-align:left;
+            white-space:pre-wrap;
+            word-break:break-word;
+          ">${escapeHtml(raw)}</pre>
+        </div>
+
       </div>
     `;
 
     return;
 
   }
-
-  const tickets =
-    Array.isArray(result.tickets)
-      ? result.tickets
-      : [];
 
   if (tickets.length === 0) {
 
@@ -375,37 +396,14 @@ function renderResult(result) {
 
       <div class="debug">
 
-        <strong>🔎 ข้อมูลจาก API</strong>
+        <strong>🔎 API RAW RESPONSE</strong>
 
-        <br><br>
-
-        ok:
-        ${escapeHtml(result.ok)}
-
-        <br>
-
-        count:
-        ${escapeHtml(result.count)}
-
-        <br>
-
-        tickets:
-        ${escapeHtml(
-          JSON.stringify(result.tickets)
-        )}
-
-        ${
-          result.debug
-            ? '<br><br>debug:<br>' +
-              escapeHtml(
-                JSON.stringify(
-                  result.debug,
-                  null,
-                  2
-                )
-              )
-            : ''
-        }
+        <pre style="
+          text-align:left;
+          white-space:pre-wrap;
+          word-break:break-word;
+          margin-top:10px;
+        ">${escapeHtml(raw)}</pre>
 
       </div>
     `;
@@ -420,7 +418,6 @@ function renderResult(result) {
       .join('');
 
 }
-
 
 /* =====================================================
    CARD
