@@ -1,501 +1,431 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
-
-  <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <title>ปิด Ticket - Dr.Orn IT Helpdesk</title>
-
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-
-  <style>
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-
-      margin: 0;
-
-      padding: 20px;
-
-      font-family:
-        Arial,
-        "Noto Sans Thai",
-        sans-serif;
-
-      background: #f5f6f8;
-
-      color: #222;
-
-    }
-
-    .container {
-
-      max-width: 520px;
-
-      margin: 0 auto;
-
-    }
-
-    .card {
-
-      background: #ffffff;
-
-      border-radius: 16px;
-
-      padding: 24px;
-
-      box-shadow:
-        0 4px 16px
-        rgba(0, 0, 0, 0.08);
-
-    }
-
-    h1 {
-
-      margin-top: 0;
-
-      font-size: 22px;
-
-    }
-
-    .ticket {
-
-      background: #f1f3f5;
-
-      border-radius: 10px;
-
-      padding: 14px;
-
-      margin-bottom: 20px;
-
-      font-weight: bold;
-
-    }
-
-    label {
-
-      display: block;
-
-      margin-bottom: 8px;
-
-      font-weight: bold;
-
-    }
-
-    textarea {
-
-      width: 100%;
-
-      min-height: 140px;
-
-      padding: 12px;
-
-      border: 1px solid #d0d4d9;
-
-      border-radius: 10px;
-
-      font-size: 16px;
-
-      resize: vertical;
-
-    }
-
-    textarea:focus {
-
-      outline: none;
-
-      border-color: #555;
-
-    }
-
-    button {
-
-      width: 100%;
-
-      margin-top: 18px;
-
-      padding: 14px;
-
-      border: 0;
-
-      border-radius: 10px;
-
-      background: #222;
-
-      color: white;
-
-      font-size: 16px;
-
-      font-weight: bold;
-
-      cursor: pointer;
-
-    }
-
-    button:disabled {
-
-      opacity: 0.5;
-
-      cursor: not-allowed;
-
-    }
-
-    .status {
-
-      margin-top: 16px;
-
-      text-align: center;
-
-      line-height: 1.6;
-
-    }
-
-    .success {
-
-      color: #16803c;
-
-    }
-
-    .error {
-
-      color: #c62828;
-
-    }
-
-  </style>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ปิด Ticket - Dr.Orn IT Helpdesk</title>
+
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  font-family: Arial, "Noto Sans Thai", sans-serif;
+  background: #f5f6f8;
+  color: #222;
+}
+
+.container {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.08);
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 22px;
+}
+
+.ticket {
+  background: #f1f3f5;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+textarea {
+  width: 100%;
+  min-height: 140px;
+  padding: 12px;
+  border: 1px solid #d0d4d9;
+  border-radius: 10px;
+  font-size: 16px;
+  resize: vertical;
+}
+
+button {
+  width: 100%;
+  margin-top: 18px;
+  padding: 14px;
+  border: 0;
+  border-radius: 10px;
+  background: #222;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: .5;
+}
+
+.status {
+  margin-top: 16px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.success {
+  color: #16803c;
+}
+
+.error {
+  color: #c62828;
+}
+</style>
 </head>
-
 
 <body>
 
-  <div class="container">
+<div class="container">
+  <div class="card">
 
-    <div class="card">
+    <h1>🔒 ปิด Ticket</h1>
 
-      <h1>
-        🔒 ปิด Ticket
-      </h1>
+    <div id="ticketBox" class="ticket">
+      กำลังโหลด Ticket...
+    </div>
 
+    <label for="resolution">
+      วิธีแก้ไข / รายละเอียดการดำเนินการ
+    </label>
 
-      <div
-        id="ticketBox"
-        class="ticket"
-      >
-        กำลังโหลด Ticket...
-      </div>
+    <textarea
+      id="resolution"
+      placeholder="กรุณาระบุวิธีแก้ไข เช่น ตรวจสอบสาย LAN, Restart Router และทดสอบ Internet แล้วใช้งานได้ปกติ"
+    ></textarea>
 
+    <button
+      id="closeButton"
+      onclick="closeTicket()"
+      disabled
+    >
+      🔒 ปิด Ticket
+    </button>
 
-      <label
-        for="resolution"
-      >
-        วิธีแก้ไข / รายละเอียดการดำเนินการ
-      </label>
-
-
-      <textarea
-        id="resolution"
-        placeholder="กรุณาระบุว่าแก้ไขปัญหาอย่างไร เช่น ตรวจสอบสาย LAN, Restart Router และทดสอบ Internet แล้วใช้งานได้ปกติ"
-      ></textarea>
-
-
-      <button
-        id="closeButton"
-        onclick="closeTicket()"
-        disabled
-      >
-        🔒 ปิด Ticket
-      </button>
-
-
-      <div
-        id="status"
-        class="status"
-      >
-        กำลังตรวจสอบผู้ใช้งาน...
-      </div>
-
+    <div id="status" class="status">
+      กำลังตรวจสอบผู้ใช้งาน...
     </div>
 
   </div>
+</div>
+
+<script>
+
+/* =====================================================
+   CONFIG
+===================================================== */
+
+const LIFF_ID = '2011909669-5fi1Bvth';
+
+const API_URL = 'https://script.google.com/macros/s/AKfycbyA0NV9Xek2vhsbk4LvGMqMkzdDVXhLndQwzI2sU7hgZ7yiXIAInPWyrEfWBVUKmzkc/exec';
 
 
-  <script>
+/* =====================================================
+   GLOBAL
+===================================================== */
 
-    /* =================================================
-       CONFIG
-    ================================================= */
-
-    const LIFF_ID =
-      '2011909669-5fi1Bvth';
-
-    const API_URL =
-      'https://script.google.com/macros/s/AKfycbyA0NV9Xek2vhsbk4LvGMqMkzdDVXhLndQwzI2sU7hgZ7yiXIAInPWyrEfWBVUKmzkc/exec';
+let currentTicketId = '';
+let currentUserId = '';
 
 
-    /* =================================================
-       INIT
-    ================================================= */
+/* =====================================================
+   INIT
+===================================================== */
 
-    async function init() {
+async function init() {
 
-      try {
+  const status =
+    document.getElementById('status');
 
-        document.getElementById(
-          'status'
-        ).textContent =
-          'กำลังเปิดระบบ...';
+  try {
 
+    status.textContent =
+      'กำลังเปิดระบบ...';
 
-        await liff.init({
-          liffId: LIFF_ID
-        });
-
-
-        if (!liff.isLoggedIn()) {
-
-          liff.login();
-
-          return;
-
-        }
+    await liff.init({
+      liffId: LIFF_ID
+    });
 
 
-        const profile =
-          await liff.getProfile();
+    if (!liff.isLoggedIn()) {
 
+      liff.login();
 
-        const params =
-          new URLSearchParams(
-            window.location.search
-          );
-
-
-        const ticketId =
-          params.get('ticketId');
-
-
-        if (!ticketId) {
-
-          throw new Error(
-            'ไม่พบ Ticket ID'
-          );
-
-        }
-
-
-        window.currentTicketId =
-          ticketId;
-
-
-        window.currentUserId =
-          profile.userId;
-
-
-        document.getElementById(
-          'ticketBox'
-        ).textContent =
-          '🎫 Ticket: ' + ticketId;
-
-
-        document.getElementById(
-          'status'
-        ).textContent =
-          'ผู้ดำเนินการ: ' +
-          (
-            profile.displayName ||
-            'IT Support'
-          );
-
-
-        document.getElementById(
-          'closeButton'
-        ).disabled = false;
-
-
-      } catch (error) {
-
-        console.error(error);
-
-
-        document.getElementById(
-          'status'
-        ).innerHTML =
-          '<span class="error">' +
-          '❌ ' +
-          (
-            error.message ||
-            error
-          ) +
-          '</span>';
-
-      }
+      return;
 
     }
 
 
-    /* =================================================
-       CLOSE TICKET
-    ================================================= */
-
-    async function closeTicket() {
-
-      const resolution =
-        document.getElementById(
-          'resolution'
-        ).value.trim();
+    const profile =
+      await liff.getProfile();
 
 
-      if (!resolution) {
-
-        alert(
-          'กรุณาระบุวิธีแก้ไขก่อนปิด Ticket'
-        );
-
-        return;
-
-      }
+    const params =
+      new URLSearchParams(
+        window.location.search
+      );
 
 
-      const button =
-        document.getElementById(
-          'closeButton'
-        );
+    const ticketId =
+      params.get('ticketId');
 
 
-      button.disabled = true;
+    if (!ticketId) {
 
-
-      document.getElementById(
-        'status'
-      ).textContent =
-        'กำลังปิด Ticket...';
-
-
-      try {
-
-        const response =
-          await fetch(
-            API_URL,
-            {
-
-              method: 'POST',
-
-              headers: {
-
-                'Content-Type':
-                  'application/json'
-
-              },
-
-              body: JSON.stringify({
-
-                action:
-                  'updateStatus',
-
-                ticketId:
-                  window.currentTicketId,
-
-                status:
-                  'Closed',
-
-                lineUserId:
-                  window.currentUserId,
-
-                detail:
-                  resolution
-
-              })
-
-            }
-          );
-
-
-        const result =
-          await response.json();
-
-
-        if (!result.ok) {
-
-          throw new Error(
-            result.error ||
-            result.message ||
-            'ไม่สามารถปิด Ticket ได้'
-          );
-
-        }
-
-
-        document.getElementById(
-          'status'
-        ).innerHTML =
-
-          '<span class="success">' +
-
-          '✅ ปิด Ticket สำเร็จ' +
-
-          '<br>' +
-
-          'Ticket: ' +
-          window.currentTicketId +
-
-          '<br><br>' +
-
-          'ขอบคุณค่ะ' +
-
-          '</span>';
-
-
-        document.getElementById(
-          'resolution'
-        ).disabled = true;
-
-
-        button.style.display =
-          'none';
-
-
-      } catch (error) {
-
-        console.error(error);
-
-
-        button.disabled = false;
-
-
-        document.getElementById(
-          'status'
-        ).innerHTML =
-
-          '<span class="error">' +
-
-          '❌ ' +
-
-          (
-            error.message ||
-            error
-          ) +
-
-          '</span>';
-
-      }
+      throw new Error(
+        'ไม่พบ Ticket ID'
+      );
 
     }
 
 
-    init();
+    currentTicketId =
+      ticketId;
 
-  </script>
+    currentUserId =
+      profile.userId;
+
+
+    document.getElementById(
+      'ticketBox'
+    ).textContent =
+      '🎫 Ticket: ' + currentTicketId;
+
+
+    status.textContent =
+      'ผู้ดำเนินการ: ' +
+      (profile.displayName || 'IT Support');
+
+
+    document.getElementById(
+      'closeButton'
+    ).disabled = false;
+
+
+  } catch (error) {
+
+    console.error(
+      'INIT ERROR:',
+      error
+    );
+
+    status.innerHTML =
+      '<span class="error">' +
+      '❌ ' +
+      (error.message || error) +
+      '</span>';
+
+  }
+
+}
+
+
+/* =====================================================
+   CLOSE TICKET
+===================================================== */
+
+async function closeTicket() {
+
+  const resolution =
+    document.getElementById(
+      'resolution'
+    ).value.trim();
+
+
+  if (!resolution) {
+
+    alert(
+      'กรุณาระบุวิธีแก้ไขก่อนปิด Ticket'
+    );
+
+    return;
+
+  }
+
+
+  const button =
+    document.getElementById(
+      'closeButton'
+    );
+
+  const status =
+    document.getElementById(
+      'status'
+    );
+
+
+  button.disabled = true;
+
+  status.textContent =
+    'กำลังปิด Ticket...';
+
+
+  try {
+
+    const payload = {
+
+      action: 'updateStatus',
+
+      ticketId: currentTicketId,
+
+      status: 'Closed',
+
+      lineUserId: currentUserId,
+
+      detail: resolution
+
+    };
+
+
+    console.log(
+      'Sending payload:',
+      payload
+    );
+
+
+    const response =
+      await fetch(
+        API_URL,
+        {
+          method: 'POST',
+
+          headers: {
+            'Content-Type':
+              'text/plain;charset=utf-8'
+          },
+
+          body:
+            JSON.stringify(payload),
+
+          redirect:
+            'follow'
+        }
+      );
+
+
+    console.log(
+      'HTTP Status:',
+      response.status
+    );
+
+
+    const responseText =
+      await response.text();
+
+
+    console.log(
+      'Response:',
+      responseText
+    );
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        'HTTP ' +
+        response.status +
+        ': ' +
+        responseText
+      );
+
+    }
+
+
+    let result;
+
+    try {
+
+      result =
+        JSON.parse(
+          responseText
+        );
+
+    } catch (jsonError) {
+
+      throw new Error(
+        'Backend ไม่ได้ส่ง JSON กลับมา: ' +
+        responseText.substring(0, 300)
+      );
+
+    }
+
+
+    if (!result.ok) {
+
+      throw new Error(
+        result.error ||
+        result.message ||
+        'ไม่สามารถปิด Ticket ได้'
+      );
+
+    }
+
+
+    status.innerHTML =
+      '<span class="success">' +
+      '✅ ปิด Ticket สำเร็จ' +
+      '<br>Ticket: ' +
+      currentTicketId +
+      '<br><br>ขอบคุณค่ะ' +
+      '</span>';
+
+
+    document.getElementById(
+      'resolution'
+    ).disabled = true;
+
+
+    button.style.display =
+      'none';
+
+
+  } catch (error) {
+
+    console.error(
+      'CLOSE ERROR:',
+      error
+    );
+
+
+    button.disabled = false;
+
+
+    status.innerHTML =
+      '<span class="error">' +
+      '❌ ปิด Ticket ไม่สำเร็จ' +
+      '<br><br>' +
+      (error.message || error) +
+      '</span>';
+
+  }
+
+}
+
+
+init();
+
+</script>
 
 </body>
-
 </html>
