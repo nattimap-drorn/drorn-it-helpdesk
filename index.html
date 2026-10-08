@@ -146,6 +146,13 @@
       resize: vertical;
     }
 
+    .input-help {
+      font-size: 12px;
+      color: #777;
+      margin-top: 5px;
+      line-height: 1.5;
+    }
+
     .button {
       width: 100%;
       border: 0;
@@ -365,6 +372,7 @@
       แจ้งปัญหา IT
     </h2>
 
+
     <!-- BRANCH -->
     <div class="field">
 
@@ -500,6 +508,27 @@
     </div>
 
 
+    <!-- ANYDESK -->
+    <div class="field">
+
+      <label for="anydeskId">
+        AnyDesk ID
+      </label>
+
+      <input
+        id="anydeskId"
+        type="text"
+        inputmode="numeric"
+        placeholder="กรอก AnyDesk ID หากต้องการให้ IT Remote"
+      >
+
+      <div class="input-help">
+        กรอกเฉพาะกรณีที่ต้องการให้ IT เข้าควบคุมเครื่องจากระยะไกล
+      </div>
+
+    </div>
+
+
     <!-- PROBLEM -->
     <div class="field">
 
@@ -577,16 +606,7 @@
    ============================================================
    CONFIGURATION
    ============================================================
-
-   จุดที่ต้องใส่ข้อมูลจริงมี 2 จุด
-
-   1. LIFF_ID
-   2. API_URL
-
-   ห้ามใส่ Channel Secret
-   ห้ามใส่ Access Token
    */
-
 
   const LIFF_ID =
     "2011909669-57dst4br";
@@ -738,10 +758,6 @@
       );
 
 
-      /*
-       ตรวจว่า LIFF SDK โหลดหรือไม่
-       */
-
       if (
         typeof liff === "undefined"
       ) {
@@ -752,10 +768,6 @@
 
       }
 
-
-      /*
-       ตรวจ LIFF ID
-       */
 
       if (
         !LIFF_ID ||
@@ -771,10 +783,6 @@
       }
 
 
-      /*
-       เริ่ม LIFF
-       */
-
       await liff.init({
         liffId: LIFF_ID
       });
@@ -784,10 +792,6 @@
         "เชื่อมต่อ LINE สำเร็จ"
       );
 
-
-      /*
-       ถ้ายังไม่ได้ Login
-       */
 
       if (
         !liff.isLoggedIn()
@@ -804,10 +808,6 @@
       }
 
 
-      /*
-       ดึงข้อมูล Profile
-       */
-
       setStatus(
         "กำลังตรวจสอบผู้ใช้งาน..."
       );
@@ -817,20 +817,12 @@
         await liff.getProfile();
 
 
-      /*
-       แสดงชื่อ
-       */
-
       document.getElementById(
         "userName"
       ).textContent =
         lineProfile.displayName ||
         "-";
 
-
-      /*
-       แสดงรูป
-       */
 
       if (
         lineProfile.pictureUrl
@@ -844,29 +836,17 @@
       }
 
 
-      /*
-       แสดง User Box
-       */
-
       document.getElementById(
         "userBox"
       ).style.display =
         "flex";
 
 
-      /*
-       แสดง Form
-       */
-
       document.getElementById(
         "formArea"
       ).style.display =
         "block";
 
-
-      /*
-       แสดง My Tickets
-       */
 
       document.getElementById(
         "ticketsArea"
@@ -878,10 +858,6 @@
         "พร้อมแจ้งปัญหา IT"
       );
 
-
-      /*
-       โหลด Ticket ของ User
-       */
 
       loadMyTickets();
 
@@ -984,10 +960,6 @@
     hideMessages();
 
 
-    /*
-     ตรวจ Login
-     */
-
     if (!lineProfile) {
 
       showError(
@@ -998,10 +970,6 @@
 
     }
 
-
-    /*
-     อ่านค่า Form
-     */
 
     const branch =
       document.getElementById(
@@ -1021,6 +989,12 @@
       ).value;
 
 
+    const anydeskId =
+      document.getElementById(
+        "anydeskId"
+      ).value.trim();
+
+
     const problem =
       document.getElementById(
         "problem"
@@ -1028,7 +1002,7 @@
 
 
     /*
-     Validation
+     * Validation
      */
 
     if (!branch) {
@@ -1065,7 +1039,7 @@
 
 
     /*
-     ป้องกันกดซ้ำ
+     * ป้องกันกดซ้ำ
      */
 
     const button =
@@ -1083,7 +1057,7 @@
     try {
 
       /*
-       ส่งข้อมูลไป Apps Script
+       * ส่งข้อมูลไป Apps Script
        */
 
       const result =
@@ -1111,13 +1085,16 @@
             problem,
 
           priority:
-            priority
+            priority,
+
+          anydeskId:
+            anydeskId
 
         });
 
 
       /*
-       ตรวจผลลัพธ์
+       * ตรวจผลลัพธ์
        */
 
       if (
@@ -1136,9 +1113,9 @@
 
 
       /*
-       รองรับทั้งกรณี
-       result.ticket
-       และ result โดยตรง
+       * รองรับทั้งกรณี
+       * result.ticket
+       * และ result โดยตรง
        */
 
       const ticket =
@@ -1153,7 +1130,7 @@
 
 
       /*
-       ล้าง Form
+       * ล้าง Form
        */
 
       document.getElementById(
@@ -1172,12 +1149,17 @@
 
 
       document.getElementById(
+        "anydeskId"
+      ).value = "";
+
+
+      document.getElementById(
         "problem"
       ).value = "";
 
 
       /*
-       แสดงผลสำเร็จ
+       * แสดงผลสำเร็จ
        */
 
       if (ticketId) {
@@ -1197,7 +1179,7 @@
 
 
       /*
-       โหลดรายการใหม่
+       * โหลดรายการใหม่
        */
 
       await loadMyTickets();
@@ -1450,6 +1432,13 @@
       );
 
 
+    const anydeskId =
+      escapeHTML(
+        ticket.anydeskId ||
+        ""
+      );
+
+
     const resolution =
       escapeHTML(
         ticket.resolution ||
@@ -1513,6 +1502,20 @@
           </span>
           ${problem}
         </div>
+
+
+        ${
+          anydeskId
+            ? `
+              <div class="ticket-row">
+                <span class="ticket-label">
+                  AnyDesk ID:
+                </span>
+                ${anydeskId}
+              </div>
+            `
+            : ""
+        }
 
 
         <div class="ticket-row">
