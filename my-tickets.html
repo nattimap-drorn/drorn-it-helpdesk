@@ -23,7 +23,7 @@
 
     .container {
       max-width: 700px;
-      margin: 0 auto;
+      margin: auto;
     }
 
     .header {
@@ -31,7 +31,7 @@
       color: white;
       border-radius: 16px;
       padding: 22px;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
 
     .header h1 {
@@ -42,89 +42,7 @@
     .header p {
       margin: 0;
       font-size: 14px;
-      opacity: 0.85;
-    }
-
-    .loading,
-    .empty,
-    .error {
-      background: white;
-      border-radius: 16px;
-      padding: 30px 20px;
-      text-align: center;
-    }
-
-    .ticket {
-      background: white;
-      border-radius: 16px;
-      padding: 18px;
-      margin-bottom: 14px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    }
-
-    .ticket-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 14px;
-    }
-
-    .ticket-id {
-      font-weight: bold;
-      font-size: 16px;
-    }
-
-    .status {
-      padding: 6px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: bold;
-      white-space: nowrap;
-    }
-
-    .status-open {
-      background: #fff3cd;
-      color: #856404;
-    }
-
-    .status-progress {
-      background: #dbeafe;
-      color: #1d4ed8;
-    }
-
-    .status-pending {
-      background: #ffedd5;
-      color: #c2410c;
-    }
-
-    .status-resolved {
-      background: #dcfce7;
-      color: #15803d;
-    }
-
-    .status-closed {
-      background: #e5e7eb;
-      color: #374151;
-    }
-
-    .row {
-      margin-bottom: 9px;
-      font-size: 14px;
-    }
-
-    .label {
-      color: #777;
-      margin-right: 6px;
-    }
-
-    .problem {
-      background: #f8f8f8;
-      border-radius: 10px;
-      padding: 12px;
-      margin-top: 12px;
-      line-height: 1.5;
-      font-size: 14px;
+      opacity: .85;
     }
 
     .refresh {
@@ -136,18 +54,94 @@
       background: #222;
       color: white;
       font-size: 15px;
-      cursor: pointer;
     }
 
-    .refresh:active {
-      opacity: 0.8;
+    .ticket {
+      background: white;
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
     }
 
-    .footer {
-      text-align: center;
-      color: #999;
+    .ticket-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .ticket-id {
+      font-weight: bold;
+    }
+
+    .status {
+      padding: 6px 10px;
+      border-radius: 20px;
       font-size: 12px;
-      margin-top: 20px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .open {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .progress {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .pending {
+      background: #ffedd5;
+      color: #c2410c;
+    }
+
+    .resolved {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .closed {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .row {
+      font-size: 14px;
+      margin: 8px 0;
+    }
+
+    .label {
+      color: #777;
+    }
+
+    .problem {
+      background: #f8f8f8;
+      padding: 12px;
+      border-radius: 10px;
+      margin-top: 12px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .message {
+      background: white;
+      border-radius: 16px;
+      padding: 30px 20px;
+      text-align: center;
+    }
+
+    .debug {
+      background: #fff3cd;
+      border: 1px solid #ffe69c;
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 14px;
+      font-size: 12px;
+      word-break: break-word;
     }
   </style>
 </head>
@@ -158,7 +152,7 @@
 
   <div class="header">
     <h1>📋 เคสของฉัน</h1>
-    <p id="userName">กำลังโหลดข้อมูล...</p>
+    <p id="userName">กำลังเชื่อมต่อ LINE...</p>
   </div>
 
   <button class="refresh" onclick="loadTickets()">
@@ -166,13 +160,9 @@
   </button>
 
   <div id="content">
-    <div class="loading">
-      กำลังโหลดรายการ Ticket...
+    <div class="message">
+      กำลังโหลด...
     </div>
-  </div>
-
-  <div class="footer">
-    Dr.Orn IT Helpdesk
   </div>
 
 </div>
@@ -187,7 +177,7 @@ const API_URL =
 let currentUserId = '';
 
 /* =====================================================
-   INIT LIFF
+   INIT
 ===================================================== */
 
 async function init() {
@@ -210,25 +200,22 @@ async function init() {
       profile.userId;
 
     document.getElementById('userName').textContent =
-      'สวัสดีคุณ ' + (profile.displayName || '');
+      'สวัสดีคุณ ' +
+      (profile.displayName || '');
 
     await loadTickets();
 
   } catch (error) {
 
-    console.error(error);
-
-    showError(
-      'ไม่สามารถเชื่อมต่อระบบได้<br>' +
-      escapeHtml(error.message || String(error))
-    );
+    showError(error);
 
   }
 
 }
 
+
 /* =====================================================
-   LOAD TICKETS
+   LOAD
 ===================================================== */
 
 async function loadTickets() {
@@ -241,173 +228,214 @@ async function loadTickets() {
     document.getElementById('content');
 
   content.innerHTML =
-    '<div class="loading">กำลังโหลดรายการ Ticket...</div>';
+    '<div class="message">กำลังโหลดรายการ Ticket...</div>';
 
   try {
 
     const payload = {
+
       action: 'myTickets',
-      lineUserId: currentUserId
+
+      lineUserId:
+        currentUserId
+
     };
+
+    console.log(
+      'MY TICKETS REQUEST:',
+      payload
+    );
 
     const response =
       await fetch(API_URL, {
+
         method: 'POST',
+
         headers: {
           'Content-Type':
             'text/plain;charset=utf-8'
         },
-        body: JSON.stringify(payload),
-        redirect: 'follow'
+
+        body:
+          JSON.stringify(payload),
+
+        redirect:
+          'follow'
+
       });
 
-    const result =
-      await response.json();
+    const text =
+      await response.text();
 
     console.log(
-  'MY TICKETS RESULT:',
-  JSON.stringify(result)
-);
+      'MY TICKETS RAW RESPONSE:',
+      text
+    );
 
-    if (!result.ok) {
+    let result;
+
+    try {
+
+      result =
+        JSON.parse(text);
+
+    } catch (error) {
 
       throw new Error(
-        result.error ||
-        'ไม่สามารถโหลด Ticket ได้'
+        'API ไม่ได้ส่ง JSON กลับมา: ' +
+        text.substring(0, 500)
       );
 
     }
 
-    const tickets =
-      result.tickets || [];
+    console.log(
+      'MY TICKETS RESULT:',
+      result
+    );
 
-    renderTickets(tickets);
+    renderResult(result);
 
-if (result.debug) {
-  console.log('MY TICKETS DEBUG:', result.debug);
+  } catch (error) {
 
-  const debugBox = document.createElement('div');
+    showError(error);
 
-  debugBox.style.cssText =
-    'background:#fff3cd;' +
-    'border:1px solid #ffe69c;' +
-    'border-radius:12px;' +
-    'padding:14px;' +
-    'margin-top:14px;' +
-    'font-size:13px;';
+  }
 
-  debugBox.innerHTML =
-    '<strong>🔎 Debug</strong><br>' +
-    'จำนวนแถวใน Sheet: ' +
-    result.debug.totalRows +
-    '<br>' +
-    'LINE ID ที่ได้รับ (6 ตัวท้าย): ' +
-    result.debug.receivedUserIdLast6 +
-    '<br>' +
-    'Ticket ที่ตรงกัน: ' +
-    result.debug.matchedTickets;
-
-  document
-    .getElementById('content')
-    .appendChild(debugBox);
 }
 
+
 /* =====================================================
-   RENDER TICKETS
+   RENDER RESULT
 ===================================================== */
 
-function renderTickets(tickets) {
+function renderResult(result) {
 
   const content =
     document.getElementById('content');
 
-  if (!tickets.length) {
+  if (!result) {
+
+    showError(
+      new Error('ไม่ได้รับข้อมูลจาก API')
+    );
+
+    return;
+
+  }
+
+  if (result.ok !== true) {
 
     content.innerHTML = `
-      <div class="empty">
-        <div style="font-size:42px;margin-bottom:12px;">
-          📭
-        </div>
+      <div class="message">
+        <div style="font-size:40px">⚠️</div>
 
-        <div style="font-weight:bold;margin-bottom:8px;">
-          ยังไม่มี Ticket
-        </div>
+        <strong>
+          API แจ้งข้อผิดพลาด
+        </strong>
 
-        <div style="color:#777;font-size:14px;">
-          เมื่อคุณแจ้งปัญหา IT<br>
-          Ticket จะแสดงที่หน้านี้
-        </div>
+        <p>
+          ${escapeHtml(
+            result.error || 'Unknown error'
+          )}
+        </p>
       </div>
     `;
 
     return;
+
+  }
+
+  const tickets =
+    Array.isArray(result.tickets)
+      ? result.tickets
+      : [];
+
+  if (tickets.length === 0) {
+
+    content.innerHTML = `
+      <div class="message">
+
+        <div style="font-size:42px">
+          📭
+        </div>
+
+        <strong>
+          ยังไม่มี Ticket
+        </strong>
+
+        <p style="color:#777">
+          ระบบเชื่อมต่อ API สำเร็จ<br>
+          แต่ยังไม่พบ Ticket ของ LINE Account นี้
+        </p>
+
+      </div>
+
+      <div class="debug">
+
+        <strong>🔎 ข้อมูลจาก API</strong>
+
+        <br><br>
+
+        ok:
+        ${escapeHtml(result.ok)}
+
+        <br>
+
+        count:
+        ${escapeHtml(result.count)}
+
+        <br>
+
+        tickets:
+        ${escapeHtml(
+          JSON.stringify(result.tickets)
+        )}
+
+        ${
+          result.debug
+            ? '<br><br>debug:<br>' +
+              escapeHtml(
+                JSON.stringify(
+                  result.debug,
+                  null,
+                  2
+                )
+              )
+            : ''
+        }
+
+      </div>
+    `;
+
+    return;
+
   }
 
   content.innerHTML =
     tickets
-      .map(ticket => createTicketCard(ticket))
+      .map(createTicketCard)
       .join('');
 
 }
 
+
 /* =====================================================
-   TICKET CARD
+   CARD
 ===================================================== */
 
 function createTicketCard(ticket) {
 
-  const ticketId =
-    ticket.ticketId ||
-    ticket['Ticket ID'] ||
-    '-';
-
-  const createdAt =
-    ticket.createdAt ||
-    ticket['Created At'] ||
-    '-';
-
-  const branch =
-    ticket.branch ||
-    ticket['Branch'] ||
-    '-';
-
-  const category =
-    ticket.category ||
-    ticket['Category'] ||
-    '-';
-
-  const problem =
-    ticket.problem ||
-    ticket['Problem'] ||
-    '-';
-
-  const priority =
-    ticket.priority ||
-    ticket['Priority'] ||
-    '-';
-
   const status =
-    ticket.status ||
-    ticket['Status'] ||
-    'Open';
-
-  const assignee =
-    ticket.assignee ||
-    ticket['Assignee'] ||
-    '-';
-
-  const slaDue =
-    ticket.slaDue ||
-    ticket['SLA Due'] ||
-    '-';
+    ticket.status || '-';
 
   return `
+
     <div class="ticket">
 
       <div class="ticket-header">
 
         <div class="ticket-id">
-          🎫 ${escapeHtml(ticketId)}
+          🎫 ${escapeHtml(ticket.ticketId)}
         </div>
 
         <div class="status ${getStatusClass(status)}">
@@ -418,44 +446,74 @@ function createTicketCard(ticket) {
 
       <div class="row">
         <span class="label">📅 วันที่แจ้ง:</span>
-        ${escapeHtml(formatDate(createdAt))}
+        ${escapeHtml(
+          formatDate(ticket.createdAt)
+        )}
       </div>
 
       <div class="row">
         <span class="label">🏥 สาขา:</span>
-        ${escapeHtml(branch)}
+        ${escapeHtml(ticket.branch)}
       </div>
 
       <div class="row">
         <span class="label">📂 ประเภท:</span>
-        ${escapeHtml(category)}
+        ${escapeHtml(ticket.category)}
       </div>
 
       <div class="row">
         <span class="label">⚠️ Priority:</span>
-        ${escapeHtml(priority)}
+        ${escapeHtml(ticket.priority)}
       </div>
 
       <div class="row">
         <span class="label">👨‍💻 ผู้รับผิดชอบ:</span>
-        ${escapeHtml(assignee)}
+        ${escapeHtml(
+          ticket.assignee || '-'
+        )}
       </div>
 
       <div class="row">
         <span class="label">⏰ SLA Due:</span>
-        ${escapeHtml(formatDate(slaDue))}
+        ${escapeHtml(
+          formatDate(ticket.slaDue)
+        )}
       </div>
 
       <div class="problem">
+
         <strong>📝 ปัญหา</strong>
+
         <br><br>
-        ${escapeHtml(problem)}
+
+        ${escapeHtml(ticket.problem)}
+
       </div>
 
+      ${
+        ticket.resolution
+          ? `
+            <div class="problem">
+
+              <strong>🔧 วิธีแก้ไข</strong>
+
+              <br><br>
+
+              ${escapeHtml(
+                ticket.resolution
+              )}
+
+            </div>
+          `
+          : ''
+      }
+
     </div>
+
   `;
 
 }
+
 
 /* =====================================================
    STATUS
@@ -466,22 +524,22 @@ function getStatusClass(status) {
   switch (status) {
 
     case 'Open':
-      return 'status-open';
+      return 'open';
 
     case 'In Progress':
-      return 'status-progress';
+      return 'progress';
 
     case 'Pending':
-      return 'status-pending';
+      return 'pending';
 
     case 'Resolved':
-      return 'status-resolved';
+      return 'resolved';
 
     case 'Closed':
-      return 'status-closed';
+      return 'closed';
 
     default:
-      return 'status-closed';
+      return 'closed';
 
   }
 
@@ -513,75 +571,77 @@ function getStatusText(status) {
 
 }
 
+
 /* =====================================================
-   FORMAT DATE
+   DATE
 ===================================================== */
 
 function formatDate(value) {
 
-  if (!value || value === '-') {
+  if (!value) {
     return '-';
   }
 
-  try {
+  const date =
+    new Date(value);
 
-    const date =
-      new Date(value);
-
-    if (isNaN(date.getTime())) {
-      return String(value);
-    }
-
-    return date.toLocaleString(
-      'th-TH',
-      {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      }
-    );
-
-  } catch (error) {
-
+  if (isNaN(date.getTime())) {
     return String(value);
-
   }
 
+  return date.toLocaleString(
+    'th-TH',
+    {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }
+  );
+
 }
+
 
 /* =====================================================
    ERROR
 ===================================================== */
 
-function showError(message) {
+function showError(error) {
 
   document.getElementById('content').innerHTML = `
-    <div class="error">
-      <div style="font-size:40px;margin-bottom:12px;">
+
+    <div class="message">
+
+      <div style="font-size:40px">
         ⚠️
       </div>
 
-      <div style="font-weight:bold;margin-bottom:10px;">
-        ไม่สามารถโหลดข้อมูลได้
-      </div>
+      <strong>
+        เกิดข้อผิดพลาด
+      </strong>
 
-      <div style="color:#777;font-size:14px;">
-        ${message}
-      </div>
+      <p>
+        ${escapeHtml(
+          error.message ||
+          String(error)
+        )}
+      </p>
+
     </div>
+
   `;
 
 }
 
+
 /* =====================================================
-   ESCAPE HTML
+   ESCAPE
 ===================================================== */
 
 function escapeHtml(value) {
 
-  return String(value || '')
+  return String(value ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -589,6 +649,7 @@ function escapeHtml(value) {
     .replace(/'/g, '&#039;');
 
 }
+
 
 /* =====================================================
    START
