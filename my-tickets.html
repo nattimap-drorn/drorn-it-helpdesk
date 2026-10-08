@@ -1,183 +1,325 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
+
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>เคสของฉัน - Dr.Orn IT Helpdesk</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <title>
+    เคสของฉัน - Dr.Orn IT Helpdesk
+  </title>
+
+  <script
+    src="https://static.line-scdn.net/liff/edge/2/sdk.js">
+  </script>
 
   <style>
+
     * {
       box-sizing: border-box;
     }
 
     body {
+
       margin: 0;
+
       padding: 20px;
-      font-family: Arial, "Noto Sans Thai", sans-serif;
+
+      font-family:
+        Arial,
+        "Noto Sans Thai",
+        sans-serif;
+
       background: #f5f5f5;
+
       color: #222;
+
     }
 
     .container {
+
       max-width: 700px;
+
       margin: auto;
+
     }
 
     .header {
+
       background: #222;
+
       color: white;
+
       border-radius: 16px;
+
       padding: 22px;
+
       margin-bottom: 16px;
+
     }
 
     .header h1 {
+
       margin: 0 0 8px;
+
       font-size: 22px;
+
     }
 
     .header p {
+
       margin: 0;
+
       font-size: 14px;
+
       opacity: .85;
+
     }
 
     .refresh {
+
       width: 100%;
+
       border: 0;
+
       border-radius: 12px;
+
       padding: 13px;
+
       margin-bottom: 16px;
+
       background: #222;
+
       color: white;
+
       font-size: 15px;
+
     }
 
     .ticket {
+
       background: white;
+
       border-radius: 16px;
+
       padding: 18px;
+
       margin-bottom: 14px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+
+      box-shadow:
+        0 2px 8px rgba(0,0,0,.06);
+
     }
 
     .ticket-header {
+
       display: flex;
+
       justify-content: space-between;
+
       gap: 10px;
+
       align-items: center;
+
       margin-bottom: 14px;
+
     }
 
     .ticket-id {
+
       font-weight: bold;
+
     }
 
     .status {
+
       padding: 6px 10px;
+
       border-radius: 20px;
+
       font-size: 12px;
+
       font-weight: bold;
+
       white-space: nowrap;
+
     }
 
     .open {
+
       background: #fff3cd;
+
       color: #856404;
+
     }
 
     .progress {
+
       background: #dbeafe;
+
       color: #1d4ed8;
+
     }
 
     .pending {
+
       background: #ffedd5;
+
       color: #c2410c;
+
     }
 
     .resolved {
+
       background: #dcfce7;
+
       color: #15803d;
+
     }
 
     .closed {
+
       background: #e5e7eb;
+
       color: #374151;
+
     }
 
     .row {
+
       font-size: 14px;
+
       margin: 8px 0;
+
     }
 
     .label {
+
       color: #777;
+
     }
 
     .problem {
+
       background: #f8f8f8;
+
       padding: 12px;
+
       border-radius: 10px;
+
       margin-top: 12px;
+
       font-size: 14px;
+
       line-height: 1.5;
+
     }
 
     .message {
+
       background: white;
+
       border-radius: 16px;
+
       padding: 30px 20px;
+
       text-align: center;
+
     }
 
     .debug {
+
       background: #fff3cd;
+
       border: 1px solid #ffe69c;
+
       border-radius: 12px;
+
       padding: 14px;
+
       margin-top: 14px;
+
       font-size: 12px;
+
       word-break: break-word;
+
     }
+
   </style>
+
 </head>
+
 
 <body>
 
 <div class="container">
 
+
+  <!-- HEADER -->
+
   <div class="header">
-    <h1>📋 เคสของฉัน</h1>
-    <p id="userName">กำลังเชื่อมต่อ LINE...</p>
+
+    <h1>
+      📋 เคสของฉัน
+    </h1>
+
+    <p id="userName">
+      กำลังเชื่อมต่อ LINE...
+    </p>
+
   </div>
 
-  <button class="refresh" onclick="loadTickets()">
+
+  <!-- REFRESH -->
+
+  <button
+    class="refresh"
+    onclick="loadTickets()"
+  >
+
     🔄 รีเฟรชรายการเคส
+
   </button>
 
+
+  <!-- CONTENT -->
+
   <div id="content">
+
     <div class="message">
+
       กำลังโหลด...
+
     </div>
+
   </div>
+
 
 </div>
 
+
 <script>
 
-const LIFF_ID = '2011909669-olKYnktd';
 
-document.getElementById('userName').textContent =
-  'กำลังเริ่มต้น LIFF...';
+/* =====================================================
+   CONFIG
+===================================================== */
+
+const LIFF_ID =
+  '2011909669-olKYnktd';
 
 const API_URL =
   'https://drorn-it-helpdesk-webhook.nattima-p.workers.dev';
 
+
 let currentUserId = '';
+
+
 
 /* =====================================================
    INIT
@@ -187,169 +329,61 @@ async function init() {
 
   try {
 
+
+    document
+      .getElementById('userName')
+      .textContent =
+        'กำลังเริ่มต้น LIFF...';
+
+
     await liff.init({
-      liffId: LIFF_ID
+
+      liffId:
+        LIFF_ID
+
     });
 
+
+    document
+      .getElementById('userName')
+      .textContent =
+        'LIFF เริ่มต้นสำเร็จ กำลังตรวจสอบบัญชี...';
+
+
     if (!liff.isLoggedIn()) {
+
       liff.login();
+
       return;
+
     }
+
 
     const profile =
       await liff.getProfile();
 
+
     currentUserId =
       profile.userId;
 
-    document.getElementById('userName').textContent =
-      'สวัสดีคุณ ' +
-      (profile.displayName || '');
+
+    document
+      .getElementById('userName')
+      .textContent =
+        'สวัสดีคุณ ' +
+        (
+          profile.displayName ||
+          ''
+        );
+
 
     await loadTickets();
 
-  } catch (error) {
-
-    showError(error);
-
-  }
-
-}
-
-
-/* =====================================================
-   LOAD
-===================================================== */
-
-async function loadTickets() {
-
-  if (!currentUserId) {
-    return;
-  }
-
-  const content =
-    document.getElementById('content');
-
-  content.innerHTML =
-    '<div class="message">กำลังโหลดรายการ Ticket...</div>';
-
-  try {
-
-    const payload = {
-
-      action: 'myTickets',
-
-      lineUserId:
-        currentUserId
-
-    };
-
-    console.log(
-      'MY TICKETS REQUEST:',
-      payload
-    );
-
-    const response =
-      await fetch(API_URL, {
-
-        method: 'POST',
-
-        headers: {
-          'Content-Type':
-            'text/plain;charset=utf-8'
-        },
-
-        body:
-          JSON.stringify(payload),
-
-        redirect:
-          'follow'
-
-      });
-
-    const text =
-      await response.text();
-
-    console.log(
-      'MY TICKETS RAW RESPONSE:',
-      text
-    );
-
-    /*
-     * ================================================
-     * Parse Worker Response
-     * ================================================
-     */
-
-    let workerResult;
-
-    try {
-
-      workerResult =
-        JSON.parse(text);
-
-    } catch (error) {
-
-      throw new Error(
-        'Worker ไม่ได้ส่ง JSON กลับมา'
-      );
-
-    }
-
-    /*
-     * ================================================
-     * Worker ส่ง Apps Script Response
-     * มาเป็น JSON String
-     * ================================================
-     */
-
-    let result;
-
-    if (
-      workerResult &&
-      typeof workerResult.appsScriptResponse ===
-        'string'
-    ) {
-
-      try {
-
-        result =
-          JSON.parse(
-            workerResult.appsScriptResponse
-          );
-
-      } catch (error) {
-
-        throw new Error(
-          'ไม่สามารถอ่านข้อมูลจาก Apps Script ได้'
-        );
-
-      }
-
-    } else {
-
-      result =
-        workerResult;
-
-    }
-
-    console.log(
-      'FINAL MY TICKETS RESULT:',
-      result
-    );
-
-    /*
-     * ================================================
-     * ส่งข้อมูลจริงให้ renderResult()
-     * ================================================
-     */
-
-    renderResult(result);
 
   } catch (error) {
 
     console.error(
-      'MY TICKETS ERROR:',
+      'LIFF INIT ERROR:',
       error
     );
 
@@ -359,43 +393,337 @@ async function loadTickets() {
 
 }
 
+
+
 /* =====================================================
-   RENDER RESULT
+   LOAD TICKETS
 ===================================================== */
 
-function renderResult(result) {
+async function loadTickets() {
+
+
+  if (!currentUserId) {
+
+    return;
+
+  }
+
 
   const content =
     document.getElementById('content');
 
+
+  content.innerHTML =
+    '<div class="message">' +
+    'กำลังโหลดรายการ Ticket...' +
+    '</div>';
+
+
+  try {
+
+
+    const payload = {
+
+      action:
+        'myTickets',
+
+      lineUserId:
+        currentUserId
+
+    };
+
+
+    console.log(
+      'MY TICKETS REQUEST:',
+      payload
+    );
+
+
+    const response =
+      await fetch(
+
+        API_URL,
+
+        {
+
+          method:
+            'POST',
+
+          headers: {
+
+            'Content-Type':
+              'text/plain;charset=utf-8'
+
+          },
+
+          body:
+            JSON.stringify(
+              payload
+            ),
+
+          redirect:
+            'follow'
+
+        }
+
+      );
+
+
+    const text =
+      await response.text();
+
+
+    console.log(
+      'MY TICKETS RAW RESPONSE:',
+      text
+    );
+
+
+    /*
+     * ==========================================
+     * STEP 1
+     * Parse Worker Response
+     * ==========================================
+     */
+
+    const workerResult =
+      JSON.parse(text);
+
+
+    console.log(
+      'WORKER RESULT:',
+      workerResult
+    );
+
+
+    /*
+     * ==========================================
+     * STEP 2
+     * อ่าน Apps Script Response
+     * ==========================================
+     */
+
+    const appsScriptResponse =
+      workerResult.appsScriptResponse ||
+      '';
+
+
+    if (!appsScriptResponse) {
+
+      throw new Error(
+        'ไม่พบ Apps Script Response'
+      );
+
+    }
+
+
+    /*
+     * ==========================================
+     * STEP 3
+     *
+     * Apps Script Response เป็น String
+     *
+     * เราจะดึง JSON object จาก String
+     * โดยตรง
+     * ==========================================
+     */
+
+    const jsonText =
+      appsScriptResponse.trim();
+
+
+    /*
+     * ==========================================
+     * หา count
+     * ==========================================
+     */
+
+    const countMatch =
+      jsonText.match(
+        /"count"\s*:\s*(\d+)/
+      );
+
+
+    const count =
+      countMatch
+        ? Number(
+            countMatch[1]
+          )
+        : 0;
+
+
+    /*
+     * ==========================================
+     * หา tickets
+     * ==========================================
+     */
+
+    const ticketsKey =
+      '"tickets":';
+
+
+    const ticketsPosition =
+      jsonText.indexOf(
+        ticketsKey
+      );
+
+
+    if (
+      ticketsPosition === -1
+    ) {
+
+      throw new Error(
+        'ไม่พบข้อมูล tickets จาก Apps Script'
+      );
+
+    }
+
+
+    const arrayStart =
+      jsonText.indexOf(
+        '[',
+        ticketsPosition
+      );
+
+
+    const arrayEnd =
+      jsonText.lastIndexOf(
+        ']'
+      );
+
+
+    if (
+      arrayStart === -1 ||
+      arrayEnd === -1 ||
+      arrayEnd < arrayStart
+    ) {
+
+      throw new Error(
+        'ไม่พบรายการ Ticket ที่สมบูรณ์'
+      );
+
+    }
+
+
+    const ticketsText =
+      jsonText.substring(
+        arrayStart,
+        arrayEnd + 1
+      );
+
+
+    let tickets;
+
+
+    try {
+
+      tickets =
+        JSON.parse(
+          ticketsText
+        );
+
+    } catch (error) {
+
+      console.error(
+        'TICKETS JSON ERROR:',
+        error
+      );
+
+      throw new Error(
+        'ไม่สามารถอ่านรายการ Ticket ได้'
+      );
+
+    }
+
+
+    /*
+     * ==========================================
+     * FINAL RESULT
+     * ==========================================
+     */
+
+    const result = {
+
+      ok:
+        true,
+
+      count:
+        count,
+
+      tickets:
+        tickets
+
+    };
+
+
+    console.log(
+      'FINAL MY TICKETS RESULT:',
+      result
+    );
+
+
+    renderResult(
+      result
+    );
+
+
+  } catch (error) {
+
+
+    console.error(
+      'MY TICKETS ERROR:',
+      error
+    );
+
+
+    showError(
+      error
+    );
+
+
+  }
+
+}
+
+
+
+/* =====================================================
+   RENDER RESULT
+===================================================== */
+
+function renderResult(
+  result
+) {
+
+
+  const content =
+    document.getElementById(
+      'content'
+    );
+
+
   if (!result) {
 
     showError(
-      new Error('ไม่ได้รับข้อมูลจาก API')
+      new Error(
+        'ไม่ได้รับข้อมูลจาก API'
+      )
     );
 
     return;
 
   }
 
-  const raw =
-    JSON.stringify(
-      result,
-      null,
-      2
-    );
-
-  const tickets =
-    Array.isArray(result.tickets)
-      ? result.tickets
-      : [];
 
   if (result.ok !== true) {
 
     content.innerHTML = `
+
       <div class="message">
 
-        <div style="font-size:40px">
+        <div
+          style="font-size:40px"
+        >
           ⚠️
         </div>
 
@@ -404,34 +732,49 @@ function renderResult(result) {
         </strong>
 
         <p>
-          ${escapeHtml(
-            result.error || 'Unknown error'
-          )}
+          ${
+            escapeHtml(
+              result.error ||
+              'Unknown error'
+            )
+          }
         </p>
 
-        <div class="debug">
-          <strong>API RAW RESPONSE</strong>
-
-          <pre style="
-            text-align:left;
-            white-space:pre-wrap;
-            word-break:break-word;
-          ">${escapeHtml(raw)}</pre>
-        </div>
-
       </div>
+
     `;
 
     return;
 
   }
 
-  if (tickets.length === 0) {
+
+  const tickets =
+    Array.isArray(
+      result.tickets
+    )
+      ? result.tickets
+      : [];
+
+
+  /*
+   * ==========================================
+   * ไม่มี Ticket
+   * ==========================================
+   */
+
+  if (
+    tickets.length === 0
+  ) {
+
 
     content.innerHTML = `
+
       <div class="message">
 
-        <div style="font-size:42px">
+        <div
+          style="font-size:42px"
+        >
           📭
         </div>
 
@@ -439,126 +782,274 @@ function renderResult(result) {
           ยังไม่มี Ticket
         </strong>
 
-        <p style="color:#777">
+        <p
+          style="color:#777"
+        >
           ระบบเชื่อมต่อ API สำเร็จ<br>
-          แต่ยังไม่พบ Ticket ของ LINE Account นี้
+          แต่ยังไม่พบ Ticket
+          ของ LINE Account นี้
         </p>
 
       </div>
 
       <div class="debug">
 
-        <strong>🔎 API RAW RESPONSE</strong>
+        <strong>
+          🔎 API RESPONSE
+        </strong>
 
-        <pre style="
-          text-align:left;
-          white-space:pre-wrap;
-          word-break:break-word;
-          margin-top:10px;
-        ">${escapeHtml(raw)}</pre>
+        <br><br>
+
+        count:
+        ${
+          escapeHtml(
+            result.count
+          )
+        }
 
       </div>
+
     `;
+
 
     return;
 
   }
 
+
+  /*
+   * ==========================================
+   * แสดง Ticket
+   * ==========================================
+   */
+
   content.innerHTML =
     tickets
-      .map(createTicketCard)
+      .map(
+        createTicketCard
+      )
       .join('');
 
 }
 
+
+
 /* =====================================================
-   CARD
+   CREATE TICKET CARD
 ===================================================== */
 
-function createTicketCard(ticket) {
+function createTicketCard(
+  ticket
+) {
+
 
   const status =
-    ticket.status || '-';
+    ticket.status ||
+    '-';
+
 
   return `
 
     <div class="ticket">
 
+
       <div class="ticket-header">
 
+
         <div class="ticket-id">
-          🎫 ${escapeHtml(ticket.ticketId)}
+
+          🎫
+          ${
+            escapeHtml(
+              ticket.ticketId
+            )
+          }
+
         </div>
 
-        <div class="status ${getStatusClass(status)}">
-          ${getStatusText(status)}
+
+        <div
+          class="status ${
+            getStatusClass(
+              status
+            )
+          }"
+        >
+
+          ${
+            getStatusText(
+              status
+            )
+          }
+
         </div>
 
+
       </div>
 
-      <div class="row">
-        <span class="label">📅 วันที่แจ้ง:</span>
-        ${escapeHtml(
-          formatDate(ticket.createdAt)
-        )}
-      </div>
 
       <div class="row">
-        <span class="label">🏥 สาขา:</span>
-        ${escapeHtml(ticket.branch)}
+
+        <span class="label">
+          📅 วันที่แจ้ง:
+        </span>
+
+        ${
+          escapeHtml(
+            formatDate(
+              ticket.createdAt
+            )
+          )
+        }
+
       </div>
 
-      <div class="row">
-        <span class="label">📂 ประเภท:</span>
-        ${escapeHtml(ticket.category)}
-      </div>
 
       <div class="row">
-        <span class="label">⚠️ Priority:</span>
-        ${escapeHtml(ticket.priority)}
+
+        <span class="label">
+          🏥 สาขา:
+        </span>
+
+        ${
+          escapeHtml(
+            ticket.branch
+          )
+        }
+
       </div>
 
-      <div class="row">
-        <span class="label">👨‍💻 ผู้รับผิดชอบ:</span>
-        ${escapeHtml(
-          ticket.assignee || '-'
-        )}
-      </div>
 
       <div class="row">
-        <span class="label">⏰ SLA Due:</span>
-        ${escapeHtml(
-          formatDate(ticket.slaDue)
-        )}
+
+        <span class="label">
+          📂 ประเภท:
+        </span>
+
+        ${
+          escapeHtml(
+            ticket.category
+          )
+        }
+
       </div>
+
+
+      <div class="row">
+
+        <span class="label">
+          ⚠️ Priority:
+        </span>
+
+        ${
+          escapeHtml(
+            ticket.priority
+          )
+        }
+
+      </div>
+
+
+      <div class="row">
+
+        <span class="label">
+          👨‍💻 ผู้รับผิดชอบ:
+        </span>
+
+        ${
+          escapeHtml(
+            ticket.assignee ||
+            '-'
+          )
+        }
+
+      </div>
+
+
+      <div class="row">
+
+        <span class="label">
+          ⏰ SLA Due:
+        </span>
+
+        ${
+          escapeHtml(
+            formatDate(
+              ticket.slaDue
+            )
+          )
+        }
+
+      </div>
+
 
       <div class="problem">
 
-        <strong>📝 ปัญหา</strong>
+        <strong>
+          📝 ปัญหา
+        </strong>
 
         <br><br>
 
-        ${escapeHtml(ticket.problem)}
+        ${
+          escapeHtml(
+            ticket.problem
+          )
+        }
 
       </div>
+
 
       ${
         ticket.resolution
           ? `
+
             <div class="problem">
 
-              <strong>🔧 วิธีแก้ไข</strong>
+              <strong>
+                🔧 วิธีแก้ไข
+              </strong>
 
               <br><br>
 
-              ${escapeHtml(
-                ticket.resolution
-              )}
+              ${
+                escapeHtml(
+                  ticket.resolution
+                )
+              }
 
             </div>
+
           `
           : ''
       }
+
+
+      ${
+        ticket.satisfaction
+          ? `
+
+            <div
+              class="row"
+              style="margin-top:14px"
+            >
+
+              <span class="label">
+                ⭐ ความพึงพอใจ:
+              </span>
+
+              ${
+                escapeHtml(
+                  ticket.satisfaction
+                )
+              }/5
+
+            </div>
+
+          `
+          : ''
+      }
+
 
     </div>
 
@@ -567,56 +1058,97 @@ function createTicketCard(ticket) {
 }
 
 
+
 /* =====================================================
-   STATUS
+   STATUS CLASS
 ===================================================== */
 
-function getStatusClass(status) {
+function getStatusClass(
+  status
+) {
 
-  switch (status) {
+
+  switch (
+    status
+  ) {
+
 
     case 'Open':
+
       return 'open';
 
+
     case 'In Progress':
+
       return 'progress';
 
+
     case 'Pending':
+
       return 'pending';
 
+
     case 'Resolved':
+
       return 'resolved';
 
+
     case 'Closed':
+
       return 'closed';
 
+
     default:
+
       return 'closed';
 
   }
 
 }
 
-function getStatusText(status) {
 
-  switch (status) {
+
+/* =====================================================
+   STATUS TEXT
+===================================================== */
+
+function getStatusText(
+  status
+) {
+
+
+  switch (
+    status
+  ) {
+
 
     case 'Open':
+
       return '🟡 เปิดเคส';
 
+
     case 'In Progress':
+
       return '🔵 กำลังดำเนินการ';
 
+
     case 'Pending':
+
       return '🟠 รอดำเนินการ';
 
+
     case 'Resolved':
+
       return '🟢 แก้ไขแล้ว';
 
+
     case 'Closed':
+
       return '✅ ปิดแล้ว';
 
+
     default:
+
       return status || '-';
 
   }
@@ -624,83 +1156,155 @@ function getStatusText(status) {
 }
 
 
+
 /* =====================================================
    DATE
 ===================================================== */
 
-function formatDate(value) {
+function formatDate(
+  value
+) {
+
 
   if (!value) {
+
     return '-';
+
   }
+
 
   const date =
-    new Date(value);
+    new Date(
+      value
+    );
 
-  if (isNaN(date.getTime())) {
-    return String(value);
+
+  if (
+    isNaN(
+      date.getTime()
+    )
+  ) {
+
+    return String(
+      value
+    );
+
   }
 
+
   return date.toLocaleString(
+
     'th-TH',
+
     {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+
+      day:
+        '2-digit',
+
+      month:
+        '2-digit',
+
+      year:
+        'numeric',
+
+      hour:
+        '2-digit',
+
+      minute:
+        '2-digit'
+
     }
+
   );
 
 }
+
 
 
 /* =====================================================
    ERROR
 ===================================================== */
 
-function showError(error) {
+function showError(
+  error
+) {
 
-  document.getElementById('content').innerHTML = `
 
-    <div class="message">
+  document
+    .getElementById(
+      'content'
+    )
+    .innerHTML = `
 
-      <div style="font-size:40px">
-        ⚠️
+      <div class="message">
+
+        <div
+          style="font-size:40px"
+        >
+          ⚠️
+        </div>
+
+        <strong>
+          เกิดข้อผิดพลาด
+        </strong>
+
+        <p>
+          ${
+            escapeHtml(
+              error.message ||
+              String(error)
+            )
+          }
+        </p>
+
       </div>
 
-      <strong>
-        เกิดข้อผิดพลาด
-      </strong>
-
-      <p>
-        ${escapeHtml(
-          error.message ||
-          String(error)
-        )}
-      </p>
-
-    </div>
-
-  `;
+    `;
 
 }
+
 
 
 /* =====================================================
-   ESCAPE
+   ESCAPE HTML
 ===================================================== */
 
-function escapeHtml(value) {
+function escapeHtml(
+  value
+) {
 
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+
+  return String(
+    value ?? ''
+  )
+
+    .replace(
+      /&/g,
+      '&amp;'
+    )
+
+    .replace(
+      /</g,
+      '&lt;'
+    )
+
+    .replace(
+      />/g,
+      '&gt;'
+    )
+
+    .replace(
+      /"/g,
+      '&quot;'
+    )
+
+    .replace(
+      /'/g,
+      '&#039;'
+    );
 
 }
+
 
 
 /* =====================================================
@@ -709,7 +1313,9 @@ function escapeHtml(value) {
 
 init();
 
+
 </script>
 
 </body>
+
 </html>
