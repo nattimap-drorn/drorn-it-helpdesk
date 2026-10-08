@@ -268,87 +268,96 @@ async function loadTickets() {
       });
 
     const text =
-  await response.text();
+      await response.text();
 
-console.log(
-  'MY TICKETS RAW RESPONSE:',
-  text
-);
-
-let workerResult;
-
-try {
-
-  workerResult =
-    JSON.parse(text);
-
-} catch (error) {
-
-  throw new Error(
-    'Worker ไม่ได้ส่ง JSON กลับมา: ' +
-    text.substring(0, 500)
-  );
-
-}
-
-console.log(
-  'WORKER RESULT:',
-  workerResult
-);
-
-
-/* =====================================================
-   WORKER ส่ง Apps Script Response มาเป็น JSON String
-   จึงต้อง Parse อีก 1 รอบ
-===================================================== */
-
-let result;
-
-if (
-  workerResult &&
-  typeof workerResult.appsScriptResponse === 'string'
-) {
-
-  try {
-
-    result =
-      JSON.parse(
-        workerResult.appsScriptResponse
-      );
-
-  } catch (error) {
-
-    throw new Error(
-      'Apps Script Response ไม่ใช่ JSON: ' +
-      workerResult.appsScriptResponse
-        .substring(0, 500)
+    console.log(
+      'MY TICKETS RAW RESPONSE:',
+      text
     );
 
-  }
+    /*
+     * ================================================
+     * Parse Worker Response
+     * ================================================
+     */
 
-} else {
+    let workerResult;
 
-  result =
-    workerResult;
+    try {
 
-}
+      workerResult =
+        JSON.parse(text);
 
+    } catch (error) {
 
-console.log(
-  'FINAL MY TICKETS RESULT:',
-  result
-);
+      throw new Error(
+        'Worker ไม่ได้ส่ง JSON กลับมา'
+      );
 
-renderResult(result);
+    }
+
+    /*
+     * ================================================
+     * Worker ส่ง Apps Script Response
+     * มาเป็น JSON String
+     * ================================================
+     */
+
+    let result;
+
+    if (
+      workerResult &&
+      typeof workerResult.appsScriptResponse ===
+        'string'
+    ) {
+
+      try {
+
+        result =
+          JSON.parse(
+            workerResult.appsScriptResponse
+          );
+
+      } catch (error) {
+
+        throw new Error(
+          'ไม่สามารถอ่านข้อมูลจาก Apps Script ได้'
+        );
+
+      }
+
+    } else {
+
+      result =
+        workerResult;
+
+    }
+
+    console.log(
+      'FINAL MY TICKETS RESULT:',
+      result
+    );
+
+    /*
+     * ================================================
+     * ส่งข้อมูลจริงให้ renderResult()
+     * ================================================
+     */
+
+    renderResult(result);
 
   } catch (error) {
+
+    console.error(
+      'MY TICKETS ERROR:',
+      error
+    );
 
     showError(error);
 
   }
 
 }
-
 
 /* =====================================================
    RENDER RESULT
