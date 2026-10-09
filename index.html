@@ -972,260 +972,307 @@
 
   async function submitTicket() {
 
-    hideMessages();
+  hideMessages();
 
+  if (!lineProfile) {
+    showError("ยังไม่พบข้อมูลผู้ใช้งาน LINE");
+    return;
+  }
 
-    if (!lineProfile) {
+  const branch =
+    document.getElementById("branch").value;
 
-      showError(
-        "ยังไม่พบข้อมูลผู้ใช้งาน LINE"
-      );
+  const category =
+    document.getElementById("category").value;
 
+  const priority =
+    document.getElementById("priority").value;
+
+  const anydeskId =
+    document.getElementById("anydeskId").value.trim();
+
+  const problem =
+    document.getElementById("problem").value.trim();
+
+  const attachmentInput =
+    document.getElementById("attachment");
+
+  const attachment =
+    attachmentInput.files &&
+    attachmentInput.files.length > 0
+      ? attachmentInput.files[0]
+      : null;
+
+  /*
+   * ตรวจสอบข้อมูลก่อนสร้าง Ticket
+   */
+
+  if (!branch) {
+    showError("กรุณาเลือกสาขา");
+    return;
+  }
+
+  if (!category) {
+    showError("กรุณาเลือกประเภทปัญหา");
+    return;
+  }
+
+  if (!problem) {
+    showError("กรุณาระบุรายละเอียดปัญหา");
+    return;
+  }
+
+  /*
+   * ตรวจสอบไฟล์แนบ
+   */
+
+  const allowedMimeTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "application/pdf",
+    "text/plain",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  ];
+
+  if (attachment) {
+
+    if (attachment.size > 5 * 1024 * 1024) {
+      showError("ไฟล์ต้องมีขนาดไม่เกิน 5 MB");
       return;
-
     }
 
-
-    const branch =
-      document.getElementById(
-        "branch"
-      ).value;
-
-
-    const category =
-      document.getElementById(
-        "category"
-      ).value;
-
-
-    const priority =
-      document.getElementById(
-        "priority"
-      ).value;
-
-
-    const anydeskId =
-      document.getElementById(
-        "anydeskId"
-      ).value.trim();
-
-
-    const problem =
-      document.getElementById(
-        "problem"
-      ).value.trim();
-
-
-    /*
-     * Validation
-     */
-
-    if (!branch) {
-
+    if (!allowedMimeTypes.includes(attachment.type)) {
       showError(
-        "กรุณาเลือกสาขา"
+        "ชนิดไฟล์ไม่รองรับ กรุณาใช้รูปภาพ, PDF, Word หรือ Excel"
       );
-
       return;
-
-    }
-
-
-    if (!category) {
-
-      showError(
-        "กรุณาเลือกประเภทปัญหา"
-      );
-
-      return;
-
-    }
-
-
-    if (!problem) {
-
-      showError(
-        "กรุณาระบุรายละเอียดปัญหา"
-      );
-
-      return;
-
-    }
-
-
-    /*
-     * ป้องกันกดซ้ำ
-     */
-
-    const button =
-      document.getElementById(
-        "submitButton"
-      );
-
-
-    button.disabled = true;
-
-    button.textContent =
-      "กำลังส่งแจ้งปัญหา...";
-
-
-    try {
-
-      /*
-       * ส่งข้อมูลไป Apps Script
-       */
-
-      const result =
-        await callAPI({
-
-          action:
-            "createTicket",
-
-          lineUserId:
-            lineProfile.userId,
-
-          reporter:
-            lineProfile.displayName,
-
-          displayName:
-            lineProfile.displayName,
-
-          branch:
-            branch,
-
-          category:
-            category,
-
-          problem:
-            problem,
-
-          priority:
-            priority,
-
-          anydeskId:
-            anydeskId
-
-        });
-
-
-      /*
-       * ตรวจผลลัพธ์
-       */
-
-      if (
-        !result ||
-        result.ok === false
-      ) {
-
-        throw new Error(
-          result &&
-          result.error
-            ? result.error
-            : "ไม่สามารถสร้าง Ticket ได้"
-        );
-
-      }
-
-
-      /*
-       * รองรับทั้งกรณี
-       * result.ticket
-       * และ result โดยตรง
-       */
-
-      const ticket =
-        result.ticket ||
-        result;
-
-
-      const ticketId =
-        ticket.ticketId ||
-        ticket.id ||
-        "";
-
-
-      /*
-       * ล้าง Form
-       */
-
-      document.getElementById(
-        "branch"
-      ).value = "";
-
-
-      document.getElementById(
-        "category"
-      ).value = "";
-
-
-      document.getElementById(
-        "priority"
-      ).value = "Low";
-
-
-      document.getElementById(
-        "anydeskId"
-      ).value = "";
-
-
-      document.getElementById(
-        "problem"
-      ).value = "";
-
-
-      /*
-       * แสดงผลสำเร็จ
-       */
-
-      if (ticketId) {
-
-        showSuccess(
-          "แจ้งปัญหาสำเร็จ\nTicket: " +
-          ticketId
-        );
-
-      } else {
-
-        showSuccess(
-          "แจ้งปัญหาสำเร็จแล้ว"
-        );
-
-      }
-
-
-      /*
-       * โหลดรายการใหม่
-       */
-
-      await loadMyTickets();
-
-
-    } catch (error) {
-
-      console.error(
-        "CREATE TICKET ERROR:",
-        error
-      );
-
-
-      showError(
-        error.message ||
-        String(error)
-      );
-
-
-    } finally {
-
-      button.disabled =
-        false;
-
-      button.textContent =
-        "แจ้งปัญหา IT";
-
     }
 
   }
 
+  /*
+   * ป้องกันการกดส่งซ้ำ
+   */
+
+  const button =
+    document.getElementById("submitButton");
+
+  button.disabled = true;
+  button.textContent = "กำลังส่งแจ้งปัญหา...";
+
+  try {
+
+    /*
+     * ขั้นที่ 1: สร้าง Ticket
+     */
+
+    const result = await callAPI({
+
+      action: "createTicket",
+
+      lineUserId: lineProfile.userId,
+
+      reporter: lineProfile.displayName,
+
+      displayName: lineProfile.displayName,
+
+      branch: branch,
+
+      category: category,
+
+      problem: problem,
+
+      priority: priority,
+
+      anydeskId: anydeskId
+
+    });
+
+    if (!result || result.ok === false) {
+      throw new Error(
+        result && result.error
+          ? result.error
+          : "ไม่สามารถสร้าง Ticket ได้"
+      );
+    }
+
+    const ticket =
+      result.ticket || result;
+
+    const ticketId =
+      ticket.ticketId || ticket.id || "";
+
+    if (!ticketId) {
+      throw new Error(
+        "ระบบไม่ได้ส่ง Ticket ID กลับมา กรุณาตรวจสอบรายการ Ticket ก่อนส่งใหม่"
+      );
+    }
+
+    /*
+     * ขั้นที่ 2: อัปโหลดไฟล์ ถ้ามี
+     */
+
+    let attachmentMessage = "";
+
+    if (attachment) {
+
+      button.textContent = "กำลังอัปโหลดไฟล์...";
+
+      try {
+
+        const fileBase64 = await new Promise(
+          function(resolve, reject) {
+
+            const reader = new FileReader();
+
+            reader.onload = function() {
+
+              const dataUrl = reader.result;
+
+              if (
+                typeof dataUrl !== "string" ||
+                dataUrl.indexOf(",") === -1
+              ) {
+                reject(
+                  new Error("อ่านไฟล์ไม่สำเร็จ")
+                );
+                return;
+              }
+
+              resolve(
+                dataUrl.substring(
+                  dataUrl.indexOf(",") + 1
+                )
+              );
+
+            };
+
+            reader.onerror = function() {
+              reject(new Error("อ่านไฟล์ไม่สำเร็จ"));
+            };
+
+            reader.readAsDataURL(attachment);
+
+          }
+        );
+
+        const uploadResult = await callAPI({
+
+          action: "uploadFile",
+
+          ticketId: ticketId,
+
+          fileName: attachment.name,
+
+          mimeType: attachment.type,
+
+          fileBase64: fileBase64
+
+        });
+
+        if (
+          !uploadResult ||
+          uploadResult.ok !== true
+        ) {
+          throw new Error(
+            uploadResult && uploadResult.error
+              ? uploadResult.error
+              : "อัปโหลดไฟล์ไม่สำเร็จ"
+          );
+        }
+
+        attachmentMessage =
+          "\nแนบไฟล์สำเร็จ";
+
+      } catch (uploadError) {
+
+        console.error(
+          "FILE UPLOAD ERROR:",
+          uploadError
+        );
+
+        attachmentMessage =
+          "\nสร้าง Ticket สำเร็จ แต่แนบไฟล์ไม่สำเร็จ: " +
+          (uploadError.message || String(uploadError)) +
+          "\nกรุณาแจ้ง IT พร้อม Ticket ID นี้";
+
+      }
+
+    }
+
+    /*
+     * ขั้นที่ 3: ล้าง Form
+     */
+
+    document.getElementById("branch").value = "";
+    document.getElementById("category").value = "";
+    document.getElementById("priority").value = "Low";
+    document.getElementById("anydeskId").value = "";
+    document.getElementById("problem").value = "";
+    attachmentInput.value = "";
+
+    /*
+     * ขั้นที่ 4: แจ้งผล
+     */
+
+    if (
+      attachmentMessage &&
+      attachmentMessage.indexOf("แนบไฟล์ไม่สำเร็จ") !== -1
+    ) {
+
+      showError(
+        "สร้าง Ticket สำเร็จ\nTicket: " +
+        ticketId +
+        attachmentMessage
+      );
+
+    } else {
+
+      showSuccess(
+        "แจ้งปัญหาสำเร็จ\nTicket: " +
+        ticketId +
+        attachmentMessage
+      );
+
+    }
+
+    /*
+     * โหลดรายการ Ticket ใหม่
+     */
+
+    try {
+      await loadMyTickets();
+    } catch (refreshError) {
+      console.error(
+        "LOAD MY TICKETS ERROR:",
+        refreshError
+      );
+    }
+
+  } catch (error) {
+
+    console.error(
+      "CREATE TICKET ERROR:",
+      error
+    );
+
+    showError(
+      error.message || String(error)
+    );
+
+  } finally {
+
+    button.disabled = false;
+    button.textContent = "แจ้งปัญหา IT";
+
+  }
+
+}
 
   /*
    ============================================================
