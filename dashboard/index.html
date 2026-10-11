@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Dr.Orn IT Helpdesk Dashboard (DEMO)</title>
+<!-- Fonts: the ONLY external request in this prototype is the optional Google Fonts stylesheet below (no ticket data is sent). If it is blocked, the page falls back to local Thai fonts. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<div class="demo-bar" role="status">
+  <span class="demo-tag">DEMO DATA</span>
+  <span>ข้อมูลจำลองทั้งหมด ไม่ใช่ผลการทำงานจริงของ Dr.Orn Clinic · ต้นแบบสำหรับตรวจหน้าตา Layout เท่านั้น</span>
+</div>
+
+<div class="shell">
+  <aside class="side" id="side" aria-label="Main navigation">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">Dr.O</div>
+      <div><b>IT Helpdesk</b><span>Dashboard · 6 สาขา</span></div>
+    </div>
+
+    <nav class="nav" aria-label="Sections">
+      <div class="nav-label">Helpdesk</div>
+      <a href="#overview" aria-current="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="6" height="6" rx="1"/><rect x="11.5" y="2.5" width="6" height="6" rx="1"/><rect x="2.5" y="11.5" width="6" height="6" rx="1"/><rect x="11.5" y="11.5" width="6" height="6" rx="1"/></svg>Overview</a>
+      <a href="#analytics"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16.5h14M5.5 14V9M10 14V4.5M14.5 14v-3.5"/></svg>Ticket Analytics</a>
+      <a href="#sla"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 5.5V10l3 2"/></svg>SLA &amp; Performance</a>
+      <a href="#satisfaction"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2.8l2.2 4.5 5 .7-3.6 3.5.9 4.9L10 14l-4.5 2.4.9-4.9L2.8 8l5-.7z"/></svg>Satisfaction</a>
+      <a href="#tickets"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg>Ticket List</a>
+      <div class="nav-label">แผนในอนาคต</div>
+      <span class="soon">Historical Data <em>ยังไม่ทำ</em></span>
+      <span class="soon">IT Operations <em>ยังไม่ทำ</em></span>
+      <span class="soon">Data Quality <em>ยังไม่ทำ</em></span>
+    </nav>
+
+    <div class="side-foot">
+      <fieldset>
+        <legend>Preview states (DEMO)</legend>
+        <div class="seg" role="radiogroup" aria-label="Preview states">
+          <label><input type="radio" name="view" value="normal" id="vNormal" checked><span>Normal</span></label>
+          <label><input type="radio" name="view" value="loading"><span>Loading</span></label>
+          <label><input type="radio" name="view" value="error"><span>Error</span></label>
+          <label><input type="radio" name="view" value="empty"><span>Empty</span></label>
+        </div>
+      </fieldset>
+      <span>Prototype v0.1 · ไม่เชื่อมระบบจริง</span>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="top">
+      <div>
+        <h1>Dr.Orn IT Helpdesk Dashboard</h1>
+        <p class="scope">ขอบเขตข้อมูลจริงที่วางแผนไว้: ตั้งแต่ 13 ต.ค. 2026 · ขณะนี้หน้านี้แสดงเฉพาะข้อมูลจำลอง</p>
+      </div>
+      <div class="top-meta">
+        <span class="chip">DEMO DATA</span>
+        <span>Last updated: <b id="updated">—</b></span>
+        <button class="icon-btn" id="theme" type="button" aria-pressed="false" title="สลับโหมดสว่าง/มืด">◐ Theme</button>
+        <button class="icon-btn menu-btn" id="menu" type="button" aria-label="เปิดเมนู">☰ Menu</button>
+      </div>
+    </header>
+
+    <section class="filters" aria-label="Filters">
+      <div class="filters-in">
+        <div class="field">
+          <span class="lbl" id="dateLbl">Date range (Created At)</span>
+          <div class="range" role="group" aria-labelledby="dateLbl">
+            <div class="presets" role="group" aria-label="Quick range">
+              <button type="button" data-n="7" aria-pressed="false">7D</button>
+              <button type="button" data-n="14" aria-pressed="false">14D</button>
+              <button type="button" data-n="30" aria-pressed="true">30D</button>
+              <button type="button" data-n="60" aria-pressed="false">60D</button>
+            </div>
+            <input type="date" id="from" aria-label="From date">
+            <input type="date" id="to" aria-label="To date">
+          </div>
+        </div>
+        <div class="field"><label for="branch">Branch</label><select id="branch"></select></div>
+        <div class="field"><label for="status">Status</label><select id="status"></select></div>
+        <div class="field"><label for="priority">Priority</label><select id="priority"></select></div>
+        <button class="reset" id="reset" type="button">Reset</button>
+      </div>
+      <p class="active-line" id="activeLine" aria-live="polite"></p>
+      <p class="date-note" id="dateNote" role="status" aria-live="polite" hidden></p>
+    </section>
+
+    <div class="skel" id="skeleton" aria-busy="true" aria-label="กำลังโหลดข้อมูล"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="big"></i></div>
+
+    <div class="state err" id="errorBox" hidden role="alert">
+      <h2>โหลดข้อมูลไม่สำเร็จ</h2>
+      <p>ไม่สามารถโหลดข้อมูลได้ในขณะนี้ ลองใหม่อีกครั้ง หากยังไม่หาย ให้แจ้งทีม IT (ตัวอย่างข้อความ Error สำหรับตรวจ Layout)</p>
+      <button type="button" id="retry">ลองใหม่</button>
+    </div>
+
+    <section class="section" id="overview" aria-labelledby="h-ov" hidden>
+      <div class="section-h"><h2 id="h-ov">Overview</h2><span class="demo-mini">DEMO</span><p>ภาพรวม Ticket ตามตัวกรองด้านบน</p></div>
+      <div class="kpis" id="kpis"></div>
+      <p class="card sub" style="margin-top:12px;padding:10px 14px;background:var(--surface-2);box-shadow:none">
+        นิยามใน Prototype: <b>SLA Breached</b> = ยังไม่ปิด และเวลาปัจจุบัน (ของ Demo) เกิน SLA Due · <b>SLA Due Soon</b> = ยังไม่ปิด และเหลือ ≤ 60 นาที · SLA Due ใช้ค่าที่เก็บไว้ ไม่คำนวณใหม่ (ในข้อมูลจำลองคิดเวลาต่อเนื่องจาก Created At)
+      </p>
+    </section>
+
+    <div class="state" id="emptyBox" hidden>
+      <h2>ไม่มี Ticket ตามตัวกรองนี้</h2>
+      <p>ลองขยายช่วงวันที่ หรือล้างตัวกรอง Branch / Status / Priority</p>
+      <button type="button" id="resetEmpty">ล้างตัวกรอง</button>
+    </div>
+
+    <div id="detail" hidden>
+      <section class="section" id="analytics" aria-labelledby="h-an">
+        <div class="section-h"><h2 id="h-an">Ticket Analytics</h2><span class="demo-mini">DEMO</span><p>จำนวน Ticket ตามสถานะ สาขา ความเร่งด่วน หมวดหมู่ และแนวโน้มรายวัน</p></div>
+        <div class="grid">
+          <article class="card span-5"><div class="card-h"><div><h3>Tickets by Status</h3><p class="sub">Waiting แยกสีเฉพาะ ไม่ปนกับ Open / In Progress / Closed</p></div></div><div id="statusBody"></div></article>
+          <article class="card span-7"><div class="card-h"><div><h3>Tickets by Branch</h3><p class="sub">จำนวน Ticket ตามสาขา</p></div></div><div id="branchBody"></div></article>
+          <article class="card span-12">
+            <div class="card-h"><div><h3>Ticket Trend (per day)</h3><p class="sub">Created = นับตามวันที่สร้าง · Closed = นับตามวันที่ปิด เฉพาะ Ticket ที่สร้างในช่วงวันที่เลือก (Ticket ที่สร้างก่อนช่วงแต่ปิดในช่วงนี้ไม่นับ, Ticket ที่ปิดหลังสิ้นช่วงไม่แสดง)</p></div></div>
+            <div class="trend" id="trendBox"></div>
+            <div class="legend"><span><i style="background:var(--brand)"></i>Created</span><span><i style="background:var(--s-closed)"></i>Closed (ของ Ticket ที่สร้างในช่วง)</span></div>
+            <div id="trendTable"></div>
+          </article>
+          <article class="card span-4"><div class="card-h"><div><h3>Tickets by Priority</h3><p class="sub">ความเร่งด่วน</p></div></div><div id="priorityBody"></div></article>
+          <article class="card span-4"><div class="card-h"><div><h3>Top Categories</h3><p class="sub">หมวดหมู่ปัญหาที่พบบ่อย</p></div></div><div id="categoryBody"></div></article>
+          <article class="card span-4"><div class="card-h"><div><h3>Waiting by Reason</h3><p class="sub">รอ User / รอ Vendor · เฉพาะ Ticket ที่เป็น Waiting ตอนนี้</p></div></div><div id="waitingBody"></div></article>
+        </div>
+      </section>
+
+      <section class="section" id="sla" aria-labelledby="h-sla">
+        <div class="section-h"><h2 id="h-sla">SLA &amp; Performance</h2><span class="demo-mini">DEMO</span><p>ค่ากลาง (median) ทนต่อ Ticket ที่ค้างนานผิดปกติมากกว่าค่าเฉลี่ย · n = จำนวน Ticket ที่ใช้คำนวณ</p></div>
+        <div class="perf" id="perf"></div>
+        <div class="grid">
+          <article class="card span-7"><div class="card-h"><div><h3>Resolution Time by Priority</h3><p class="sub">median · รวมกับไม่รวมช่วง Waiting (Created → Closed)</p></div></div><div id="resBody"></div></article>
+          <article class="card span-5"><div class="card-h"><div><h3>SLA Compliance by Branch</h3><p class="sub">% ของ Ticket ที่ปิดทันก่อน SLA Due</p></div></div><div id="slaBranchBody"></div></article>
+        </div>
+      </section>
+
+      <section class="section" id="satisfaction" aria-labelledby="h-sat">
+        <div class="section-h"><h2 id="h-sat">Customer Satisfaction</h2><span class="demo-mini">DEMO</span><p>คะแนนความพึงพอใจ 1–5 ดาว ของ Ticket ที่ปิดแล้ว · n = จำนวนที่ให้คะแนน</p></div>
+        <div class="kpis sat-kpis" id="satKpis"></div>
+        <p class="card sub" style="margin-top:12px;padding:10px 14px;background:var(--surface-2);box-shadow:none">
+          นิยามใน Prototype: ผูกกับ Ticket ID · เฉพาะ Ticket ที่ปิดแล้วเท่านั้นที่มีคะแนน (Ticket ที่ยังไม่ปิดไม่มีคะแนน) · ช่องว่าง = ยังไม่ได้ประเมิน ไม่นับเป็น 0 · ค่าเฉลี่ยคิดจากเฉพาะ Ticket ที่ให้คะแนน · ไม่แสดงความเห็นอิสระหรือชื่อผู้ให้คะแนน
+        </p>
+        <div class="grid" style="margin-top:12px">
+          <article class="card span-5"><div class="card-h"><div><h3>Rating Distribution</h3><p class="sub">จำนวน Ticket ตามคะแนน 5 → 1 ดาว</p></div></div><div id="ratingDistBody"></div></article>
+          <article class="card span-7"><div class="card-h"><div><h3>Average Rating by Branch</h3><p class="sub">คะแนนเฉลี่ยรายสาขา · สาขาที่มีน้อยกว่า 5 คะแนนระบุ "ตัวอย่างน้อย" ไม่ควรสรุปจากค่าเฉลี่ย</p></div></div><div id="ratingBranchBody"></div></article>
+        </div>
+      </section>
+
+      <section class="section" id="tickets" aria-labelledby="h-tk">
+        <div class="section-h"><h2 id="h-tk">Ticket List</h2><span class="demo-mini">DEMO</span><p>คลิกหัวคอลัมน์เพื่อเรียงลำดับ</p></div>
+        <div class="card table-card">
+          <div class="tbl-scroll"><table class="t" id="ticketTable"></table></div>
+          <div class="pager"><span id="pagerInfo"></span><div class="btns"><button type="button" id="prev">ก่อนหน้า</button><span id="pageNo" style="align-self:center"></span><button type="button" id="next">ถัดไป</button></div></div>
+          <p class="privacy-note">ตารางนี้ไม่แสดง LINE User ID, ชื่อผู้แจ้ง, รายละเอียดปัญหา, ความเห็นของผู้ให้คะแนน, Resolution, AnyDesk ID หรือ File Link · Assignee ในข้อมูลจริงเป็น LINE ID ต้องมีตาราง Mapping ก่อนแสดงชื่อ (ยังไม่ตัดสินใจ)</p>
+        </div>
+      </section>
+    </div>
+
+    <footer class="foot">
+      <span>DEMO DATA · ข้อมูลสร้างด้วยโปรแกรมแบบสุ่มคงที่ ไม่ใช่ข้อมูลจริง</span>
+      <span>ไม่เชื่อม Google Sheets, Apps Script, LINE หรือ API จริง · มีเพียงการขอฟอนต์จาก Google Fonts (ไม่ส่งข้อมูล Ticket)</span>
+    </footer>
+  </div>
+</div>
+
+<div id="tip" role="tooltip" hidden></div>
+
+<script src="assets/mock-data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
