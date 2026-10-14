@@ -209,7 +209,7 @@ button, select, input { font: inherit; color: inherit; }
 .filters-in { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; }
 .field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .field > label, .field > .lbl { font-size: 12px; color: var(--ink-2); font-weight: 600; }
-.field select, .field input[type="date"] {
+.field select, .field input[type="date"], .field input[type="search"] {
   height: 36px; padding: 0 10px; border: 1px solid var(--line-2); border-radius: var(--radius-sm); background: var(--surface); min-width: 130px;
 }
 .range { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
@@ -293,7 +293,22 @@ button, select, input { font: inherit; color: inherit; }
 .bar-row.sla-b { --vw: 104px; }
 .bar-row.sat { --vw: 168px; }
 .bar-row.sat-d { --vw: 84px; }
-.perf { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 14px; }
+.perf { margin-bottom: 14px; }
+.perf-h { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.perf-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.perf-row.hero { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.tile.hero { padding: 18px 20px; }
+.tile.hero .t-n { font-size: 44px; }
+.tile.hero .meter { height: 10px; border-radius: 5px; }
+.def { margin-bottom: 14px; background: var(--surface-2); border-radius: var(--radius); padding: 0 14px; }
+.def > summary { cursor: pointer; padding: 10px 0; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.def-body { padding: 0 0 14px; font-size: 13px; color: var(--ink-2); line-height: 1.6; }
+.def-body p { margin: 0 0 10px; }
+.targets { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--surface); border-radius: var(--radius-sm); overflow: hidden; }
+.targets th, .targets td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+.targets thead th { font-size: 12px; color: var(--ink-3); font-weight: 600; }
+.targets tbody th { font-weight: 600; color: var(--ink); }
+@media (max-width: 640px) { .targets { display: block; overflow-x: auto; } }
 .tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); min-width: 0; }
 .tile .t-l { font-size: 13px; font-weight: 600; color: var(--ink-2); }
 .tile .t-n { font-size: 30px; font-weight: 700; line-height: 1.15; margin-top: 6px; }
@@ -378,7 +393,7 @@ table.t { width: 100%; border-collapse: collapse; min-width: 960px; }
   .kpi-n { font-size: 28px; }
   .bar-row { grid-template-columns: minmax(64px, 96px) minmax(0, 1fr) var(--vw, 52px); }
   .field { flex: 1 1 calc(50% - 8px); }
-  .field select, .field input[type="date"] { width: 100%; min-width: 0; }
+  .field select, .field input[type="date"], .field input[type="search"] { width: 100%; min-width: 0; }
   .filters { position: static; }
   .donut { width: 150px; height: 150px; }
   .bar-row .name { white-space: normal; overflow-wrap: anywhere; line-height: 1.25; }
@@ -401,3 +416,5 @@ table.t { width: 100%; border-collapse: collapse; min-width: 960px; }
   .skel i { animation: none; }
   .side { transition: none; }
 }
+
+.page-name { margin: 0 0 8px; font-size: 12px; font-weight: 600; color: var(--ink-2); }

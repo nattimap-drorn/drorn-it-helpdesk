@@ -5,6 +5,7 @@
    - Ticket ID ใช้รูปแบบ DEMO-YYYYMMDD-NNNN เพื่อไม่ให้สับสนกับ ID จริง
    - ไม่มี LINE User ID, ชื่อผู้แจ้ง, รายละเอียดปัญหา, Resolution, AnyDesk ID, File Link อยู่ในชุดข้อมูลนี้
    - rating = คะแนนความพึงพอใจ 1-5 (จำลอง) มีเฉพาะ Ticket ที่ Closed ค่า null = ยังไม่ได้ประเมิน (ไม่นับเป็น 0) ไม่มีความเห็นอิสระ/ชื่อผู้ให้คะแนน
+   - SLA: นับจาก Claimed At ตามเป้าต่อ Priority (Critical 24/7, อื่นๆ จ.-ศ. 09:00-18:00) หยุดนับตอน Waiting; slaDue/respDue เก็บไว้ในข้อมูล (null ถ้ายังไม่ Claim)
    - "เวลาปัจจุบันของ Demo" ถูกตรึงไว้ เพื่อให้ SLA คำนวณซ้ำได้เสมอ
 
    การเชื่อมข้อมูลจริงในอนาคต: สร้างไฟล์อื่น (เช่น api-client.js) ที่ implement
@@ -27,7 +28,54 @@
   var CATEGORY_W = [0.2, 0.17, 0.08, 0.1, 0.17, 0.13, 0.07, 0.04, 0.04];
   var PRIORITIES = ['Low', 'Medium', 'High', 'Critical'];
   var PRIORITY_W = [0.3, 0.42, 0.22, 0.06];
-  var SLA_HOURS = { Critical: 1, High: 4, Medium: 8, Low: 24 };   // continuous hours from Created At (demo values)
+  /* SLA targets (demo values; lower bound of the ranges the team gave).  respMin = Response target (Created -> Claimed),
+     resMin = Resolution target counted from Claimed At (SLA clock).  cal: '24x7' = continuous, 'work' = working time only. */
+  var SLA_TARGETS = {
+    Critical: { respMin: 5,   resMin: 120,  cal: '24x7' },
+    High:     { respMin: 15,  resMin: 240,  cal: 'work' },
+    Medium:   { respMin: 60,  resMin: 540,  cal: 'work' },     // 1 working day = 9 working hours
+    Low:      { respMin: 240, resMin: 1080, cal: 'work' }      // 2 working days = 18 working hours
+  };
+  var WORK_CAL = { startHour: 9, endHour: 18, days: [1, 2, 3, 4, 5] };   // 09:00-18:00 Mon-Fri (Asia/Bangkok); public holidays are NOT excluded; no lunch break
+  // calendar maths (kept identical to the helpers in app.js; the DEMO guard recomputes every stored due time with them)
+  function nextOpen(t) {                          // earliest working moment >= t
+    var S = WORK_CAL.startHour * HOUR, E = WORK_CAL.endHour * HOUR, l = t + TZ_MS, di = Math.floor(l / DAY), tod = l - di * DAY;
+    for (var g = 0; g < 400; g++) {
+      if (WORK_CAL.days.indexOf(((4 + di) % 7 + 7) % 7) >= 0) {
+        if (tod < S) { return di * DAY + S - TZ_MS; }
+        if (tod < E) { return di * DAY + tod - TZ_MS; }
+      }
+      di++; tod = 0;
+    }
+    return t;
+  }
+  function addWork(start, ms) {
+    var E = WORK_CAL.endHour * HOUR, t = nextOpen(start);
+    while (ms > 0) {
+      var end = Math.floor((t + TZ_MS) / DAY) * DAY + E - TZ_MS, room = end - t;
+      if (ms <= room) { return t + ms; }
+      ms -= room; t = nextOpen(end);
+    }
+    return t;
+  }
+  function workBetween(a, b) {
+    if (b <= a) { return 0; }
+    var E = WORK_CAL.endHour * HOUR, total = 0, t = nextOpen(a);
+    while (t < b) { var end = Math.floor((t + TZ_MS) / DAY) * DAY + E - TZ_MS; total += Math.min(end, b) - t; t = nextOpen(end); }
+    return total;
+  }
+  function addCal(cal, start, ms) { return cal === '24x7' ? start + ms : addWork(start, ms); }
+  function betweenCal(cal, a, b) { return cal === '24x7' ? Math.max(0, b - a) : workBetween(a, b); }
+  // SLA Due = the moment the SLA clock (running from Claimed At, stopped while Waiting) has used up the Resolution target.
+  // A ticket that is still Waiting is treated as if it resumed at the demo clock.
+  function slaDueOf(t) {
+    if (t.claimedAt === null) { return null; }
+    var tg = SLA_TARGETS[t.priority], budget = tg.resMin * MIN;
+    if (t.waitStartedAt === null) { return addCal(tg.cal, t.claimedAt, budget); }
+    var used = betweenCal(tg.cal, t.claimedAt, t.waitStartedAt);
+    if (used >= budget) { return addCal(tg.cal, t.claimedAt, budget); }
+    return addCal(tg.cal, t.waitEndedAt !== null ? t.waitEndedAt : NOW, budget - used);
+  }
   var STAFF = ['Staff A', 'Staff B', 'Staff C'];
 
   // mulberry32 - small seeded PRNG
@@ -62,7 +110,8 @@
     var t = {
       id: '', createdAt: createdAt, branch: pick(GEN_BRANCHES, BRANCH_W), category: pick(CATEGORIES, CATEGORY_W),
       priority: priority, status: 'Open', waitingReason: null, assignee: null,
-      claimedAt: null, startedAt: null, closedAt: null, waitMs: 0, slaDue: createdAt + SLA_HOURS[priority] * HOUR
+      claimedAt: null, startedAt: null, closedAt: null, waitMs: 0, waitStartedAt: null, waitEndedAt: null,
+      respDue: addCal(SLA_TARGETS[priority].cal, createdAt, SLA_TARGETS[priority].respMin * MIN), slaDue: null   // slaDue is set once the ticket is claimed (see finalize below)
     };
     var k = dayKey(createdAt); perDay[k] = (perDay[k] || 0) + 1;
     t.id = 'DEMO-' + k + '-' + pad(perDay[k], 4);
@@ -100,11 +149,13 @@
       }
       t.status = 'Waiting'; t.waitingReason = reason;
       t.waitMs = Math.max(15 * MIN, Math.min(NOW - started - 10 * MIN, waitMs));   // waiting so far (<= time since start)
+      t.waitStartedAt = NOW - t.waitMs; t.waitEndedAt = null;                      // still waiting: the SLA clock has been stopped since waitStartedAt
       return t;
     }
     var closed = started + work + waitMs;
     if (closed > NOW) { t.status = 'In Progress'; return t; }
     t.status = 'Closed'; t.closedAt = closed; t.waitMs = waitMs;
+    if (waitMs > 0) { t.waitStartedAt = started + work / 2; t.waitEndedAt = t.waitStartedAt + waitMs; }   // one waiting period inside the working time
     return t;
   }
 
@@ -133,6 +184,8 @@
     if (x.s === 'Open') { t.status = 'Open'; t.claimedAt = null; t.startedAt = null; t.assignee = null; }
     tickets.push(t);
   });
+
+  tickets.forEach(function (t) { t.slaDue = slaDueOf(t); });   // after every ticket field (incl. the crafted live ones) is final
 
   tickets.sort(function (a, b) { return b.createdAt - a.createdAt; });
 
@@ -176,7 +229,7 @@
             source: 'DEMO', now: NOW, tzOffsetMs: TZ_MS,
             branches: BRANCHES, categories: CATEGORIES, priorities: PRIORITIES,
             statuses: ['Open', 'In Progress', 'Waiting', 'Closed'],
-            slaHours: SLA_HOURS,
+            slaTargets: SLA_TARGETS, workCalendar: WORK_CAL,
             firstDay: startDay, tickets: tickets,
             excluded: { branch: NON_BRANCH, count: excludedCount, ids: excludedIds }   // not displayed anywhere in the UI
           });
