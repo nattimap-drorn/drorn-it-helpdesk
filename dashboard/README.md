@@ -37,16 +37,32 @@
 - ปุ่ม Theme สลับสว่าง/มืด
 - "Preview states" ที่ Sidebar: Normal / Loading / Error / Empty เพื่อดูหน้าตาแต่ละสถานะ
 
+## หน้าและตัวกรอง (ตามเมนูซ้าย)
+
+แต่ละเมนูเป็นหน้าแยก (ใช้ `#overview`, `#analytics`, `#sla`, `#satisfaction`, `#tickets` ในที่อยู่หน้าเว็บ ปุ่ม Back ของเบราว์เซอร์ใช้ได้ และส่งลิงก์ตรงไปหน้าใดหน้าหนึ่งได้)
+ตัวกรองแต่ละหน้า **แยกอิสระต่อกัน** (ค่าที่ตั้งในหน้าหนึ่งไม่ไปมีผลกับหน้าอื่น และกลับมาหน้าเดิมจะเห็นค่าเดิม) ปุ่ม Reset ล้างเฉพาะหน้าที่เปิดอยู่
+
+| หน้า | เนื้อหา | ตัวกรอง |
+|---|---|---|
+| Overview | KPI ภาพรวม + นิยาม | ช่วงวันที่ (Created At), Branch, Priority |
+| Ticket Analytics | Status / Branch / Trend / Priority / Category / Waiting | ช่วงวันที่, Branch, Priority, Category |
+| SLA & Performance | SLA, Response/Resolution/Waiting, Compliance ตามสาขา | ช่วงวันที่, Branch, Priority, Category |
+| Customer Satisfaction | คะแนน 1–5 ดาว | ช่วงวันที่, Branch, Priority, Category |
+| Ticket List | ตาราง Ticket | ช่วงวันที่, Branch, Status, Priority, Category, ค้นหา Ticket ID |
+
+ไม่มีตัวกรอง Status ในหน้า Overview/Analytics/SLA/Satisfaction เพราะจะทำให้ตัวเลขสรุปตามสถานะไม่สื่อความหมาย (ตัวเลขทุกตัวใช้นิยามเดิม ไม่เปลี่ยน)
+ช่องค้นหาในหน้า Ticket List ค้นจาก Ticket ID แบบ `DEMO-…` เท่านั้น (ไม่ค้นชื่อผู้แจ้งหรือรายละเอียดปัญหา เพราะไม่มีข้อมูลเหล่านั้นใน Prototype)
+
 ## การแยก Mock ออกจาก Production
 
 - `app.js` อ่านข้อมูลผ่าน `window.DashboardData.load()` เท่านั้น
 - `mock-data.js` ตั้ง `source: 'DEMO'` และ `app.js` (ฟังก์ชัน `checkDemoData`) ตรวจ **ทั้งชุดข้อมูล** ก่อน render อะไรทั้งสิ้น
   ถ้ามีข้อใดไม่ผ่าน (แม้เพียง Ticket เดียว) จะปฏิเสธทั้งชุดและแสดง "Prototype blocked" พร้อมเหตุผลสั้นๆ (ไม่แสดงเนื้อหาของ Ticket)
-  - โครงสร้างครบ: `source === 'DEMO'`, `now`, `tzOffsetMs`, `firstDay`, `branches`, `categories`, `priorities`, `statuses`, `slaHours`, `tickets`
+  - โครงสร้างครบ: `source === 'DEMO'`, `now`, `tzOffsetMs`, `firstDay`, `branches`, `categories`, `priorities`, `statuses`, `slaTargets`, `workCalendar`, `tickets`
   - ทุกสาขาใน `branches` ต้องมีชื่อไทยกำหนดไว้ (สาขาที่ไม่รู้จัก เช่น `Other/Non-branch` จะไม่ผ่านและไม่ถูกแสดง)
   - ทุก Ticket: ID รูปแบบ `DEMO-YYYYMMDD-NNNN` (วันที่ใน ID เป็นวันปฏิทินที่ถูกต้องและตรงกับวันที่ `createdAt`) และไม่ซ้ำ,
     มีครบทุกฟิลด์ใน schema และ **ไม่มีฟิลด์เกิน schema**, `branch/category/priority/status` อยู่ในรายการที่กำหนด,
-    `slaDue = createdAt + SLA hours`, เวลาต่างๆ ไม่เกินเวลา Demo, `closedAt` มีก็ต่อเมื่อ `Closed`, `rating` เป็น `null` หรือจำนวนเต็ม 1–5 และมีได้เฉพาะ Closed
+    `respDue`/`slaDue` ตรงกับการคำนวณใหม่จาก `slaTargets` + `workCalendar` + ช่วง Waiting (`waitStartedAt`/`waitEndedAt`), `slaDue = null` ก็ต่อเมื่อยังไม่ถูก Claimed (Open), เวลาต่างๆ ไม่เกินเวลา Demo, `closedAt` มีก็ต่อเมื่อ `Closed`, `rating` เป็น `null` หรือจำนวนเต็ม 1–5 และมีได้เฉพาะ Closed
   - ชุดข้อมูลที่ถูกต้องแต่ `tickets` ว่าง (`[]`) ไม่ถูกปฏิเสธ จะแสดง Empty state
   - **ข้อจำกัด:** guard เป็นเพียงมาตรการกันการนำข้อมูลมาปะปนโดยไม่ตั้งใจ ไม่ใช่การรับประกันว่าแหล่งข้อมูลเป็นข้อมูลจำลองจริง
     (ใครก็ทำข้อมูลให้หน้าตาเหมือน schema นี้ได้) ความปลอดภัยจริงมาจากการไม่เชื่อมแหล่งข้อมูลจริงและการไม่ใส่ Secret ในไฟล์
@@ -57,11 +73,14 @@
 
 | ตัวชี้วัด | นิยามใน Prototype |
 |---|---|
-| SLA Due | Created At + ชั่วโมง SLA ต่อเนื่อง (Critical 1, High 4, Medium 8, Low 24) — ข้อมูลจริงต้องอ่านค่า `SLA Due` ที่เก็บไว้ ไม่คำนวณใหม่ |
-| SLA Breached | ยังไม่ปิด และเวลาปัจจุบันของ Demo เกิน SLA Due |
-| SLA Due Soon | ยังไม่ปิด และเหลือ ≤ 60 นาที |
-| SLA Status (ตาราง) | ยังไม่ปิด: Overdue / Near Due / On Time · ปิดแล้ว: Met / Missed (แยกสถานะปัจจุบันกับผลลัพธ์) |
-| SLA Compliance % | Ticket ที่ปิดทัน SLA Due ÷ Ticket ที่ปิดทั้งหมดในตัวกรอง |
+| เป้า Response / Resolution (ขอบล่างของช่วงที่ทีมตอบ) | Critical 5 นาที / 2 ชม. · High 15 นาที / 4 ชม.ทำการ · Medium 60 นาที / 9 ชม.ทำการ (1 วันทำการ) · Low 240 นาที / 18 ชม.ทำการ (2 วันทำการ) |
+| ปฏิทินนับเวลา | Critical นับต่อเนื่อง 24/7 · High/Medium/Low นับเฉพาะ จ.–ศ. 09:00–18:00 (Asia/Bangkok) ไม่ตัดวันหยุดนักขัตฤกษ์ ไม่หักพักเที่ยง · Claim นอกเวลาทำการเริ่มนับเช้าวันทำการถัดไป |
+| SLA Due | เวลาที่ใช้ Resolution budget ครบ โดยเริ่มนับที่ **Claimed At** และ **หยุดนับขณะ Waiting** (ทั้งรอผู้ใช้และรอ Vendor) · ยังไม่ Claim = ไม่มี SLA Due แสดง "Not Started" · เก็บค่าไว้ในข้อมูล ไม่คำนวณใหม่ในหน้าเว็บ (ข้อมูลจริงต้องส่ง `slaDue`, `respDue`, `waitStartedAt`, `waitEndedAt`, `slaTargets`, `workCalendar`) |
+| Response Due / Response ตามเป้า | Response Due = Created + เป้า Response ตามปฏิทินของ Priority · % ตามเป้า = Ticket ที่ Claimed ≤ Response Due ÷ Ticket ที่ Claimed (ที่ยังไม่ Claim และเลยเป้าแสดงแยก) |
+| SLA Breached | รับแล้ว ยังไม่ปิด และเวลาปัจจุบันของ Demo เกิน SLA Due |
+| SLA Due Soon | รับแล้ว ยังไม่ปิด และเวลา SLA ที่เหลือ ≤ 60 นาที (เวลาทำการ ยกเว้น Critical) |
+| SLA Status (ตาราง) | ยังไม่ Claim: Not Started · ยังไม่ปิด: Overdue / Near Due / On Time · ปิดแล้ว: Met / Missed |
+| SLA Compliance % | Ticket ที่ปิดทัน SLA Due ÷ Ticket ที่ปิดทั้งหมดในตัวกรอง (นับเฉพาะที่ปิดแล้ว) · เปลี่ยน Priority กลางทาง = คง SLA Due เดิม · Ticket ที่ยกเลิกไม่นับ (Prototype ไม่มีสถานะยกเลิก) |
 | Response Time | Created → Claimed (median) |
 | กราฟ Trend (per day) | Created = จำนวน Ticket ตามวันที่สร้าง · Closed = จำนวนตามวันที่ปิด **เฉพาะ Ticket ที่สร้างในช่วงวันที่เลือกและผ่านตัวกรองทั้งหมด** ดังนั้น Ticket ที่สร้างก่อนช่วงแต่ปิดในช่วงนี้ไม่ถูกนับ และ Ticket ที่สร้างในช่วงแต่ปิดหลังสิ้นช่วงไม่แสดงในกราฟ ถ้าต้องการนับ "ปิดในแต่ละวันทั้งหมด" ต้องตัดสินใจเปลี่ยนนิยามในรอบถัดไป |
 | Resolution Time | Created → Closed (median) และแบบไม่รวมเวลา Waiting |
@@ -69,7 +88,9 @@
 | เวลาปัจจุบันของ Demo | ตรึงไว้ที่ 15 ธ.ค. 2026 10:00 (UTC+7) เพื่อให้ผลซ้ำได้ทุกครั้ง |
 
 ข้อควรระวังสำหรับข้อมูลจริง (ยังไม่ได้ตัดสินใจ/ยืนยัน): คอลัมน์ Claimed/Started/Closed ที่แสดงเป็นวันที่อย่างเดียว,
-Assignee ในระบบจริงเป็น LINE ID จึงต้องมีตาราง Mapping ก่อนแสดงชื่อ, กติกา Waiting กับ SLA, ข้อมูลทดสอบเก่า
+Assignee ในระบบจริงเป็น LINE ID จึงต้องมีตาราง Mapping ก่อนแสดงชื่อ, ข้อมูลทดสอบเก่า, วันหยุดนักขัตฤกษ์/พักเที่ยงที่ยังไม่ถูกตัดออกจากเวลาทำการ, ค่าเป้า SLA ที่ต้องให้ทีมยืนยันขั้นสุดท้าย
+
+หมายเหตุ: เมื่อเปลี่ยนกติกา SLA ตัวเลขใน Demo เปลี่ยน (เช่น Compliance 30D 83.1% → 98.3%) และคะแนนความพึงพอใจเฉลี่ยขยับเล็กน้อย เพราะคะแนนสุ่มผูกกับผล Met/Missed
 
 ## ฟอนต์ (การเรียกภายนอกเพียงรายการเดียว)
 

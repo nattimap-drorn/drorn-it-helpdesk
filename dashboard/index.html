@@ -67,8 +67,9 @@
     </header>
 
     <section class="filters" aria-label="Filters">
+      <p class="page-name" id="pageName" aria-live="polite"></p>
       <div class="filters-in">
-        <div class="field">
+        <div class="field" data-f="date">
           <span class="lbl" id="dateLbl">Date range (Created At)</span>
           <div class="range" role="group" aria-labelledby="dateLbl">
             <div class="presets" role="group" aria-label="Quick range">
@@ -81,9 +82,11 @@
             <input type="date" id="to" aria-label="To date">
           </div>
         </div>
-        <div class="field"><label for="branch">Branch</label><select id="branch"></select></div>
-        <div class="field"><label for="status">Status</label><select id="status"></select></div>
-        <div class="field"><label for="priority">Priority</label><select id="priority"></select></div>
+        <div class="field" data-f="branch"><label for="branch">Branch</label><select id="branch"></select></div>
+        <div class="field" data-f="status"><label for="status">Status</label><select id="status"></select></div>
+        <div class="field" data-f="priority"><label for="priority">Priority</label><select id="priority"></select></div>
+        <div class="field" data-f="category"><label for="category">Category</label><select id="category"></select></div>
+        <div class="field" data-f="q"><label for="q">Ticket ID</label><input type="search" id="q" maxlength="24" placeholder="เช่น DEMO-2026…" autocomplete="off" spellcheck="false"></div>
         <button class="reset" id="reset" type="button">Reset</button>
       </div>
       <p class="active-line" id="activeLine" aria-live="polite"></p>
@@ -102,7 +105,7 @@
       <div class="section-h"><h2 id="h-ov">Overview</h2><span class="demo-mini">DEMO</span><p>ภาพรวม Ticket ตามตัวกรองด้านบน</p></div>
       <div class="kpis" id="kpis"></div>
       <p class="card sub" style="margin-top:12px;padding:10px 14px;background:var(--surface-2);box-shadow:none">
-        นิยามใน Prototype: <b>SLA Breached</b> = ยังไม่ปิด และเวลาปัจจุบัน (ของ Demo) เกิน SLA Due · <b>SLA Due Soon</b> = ยังไม่ปิด และเหลือ ≤ 60 นาที · SLA Due ใช้ค่าที่เก็บไว้ ไม่คำนวณใหม่ (ในข้อมูลจำลองคิดเวลาต่อเนื่องจาก Created At)
+        นิยามใน Prototype: <b>SLA Due</b> นับจาก Claimed At ตามเป้า Resolution ของแต่ละ Priority (Critical 2 ชม. นับต่อเนื่อง 24/7 · High 4 / Medium 9 / Low 18 ชั่วโมงทำการ นับเฉพาะ จ.–ศ. 09:00–18:00 ไม่ตัดวันหยุดนักขัตฤกษ์) และ <b>หยุดนับเมื่ออยู่ในสถานะ Waiting</b> · Ticket ที่ยังไม่ถูกรับ (Open) แสดง <b>Not Started</b> · <b>SLA Breached</b> = รับแล้ว ยังไม่ปิด และเวลาปัจจุบัน (ของ Demo) เกิน SLA Due · <b>SLA Due Soon</b> = รับแล้ว ยังไม่ปิด และเวลา SLA เหลือ ≤ 60 นาที · <b>Response ตามเป้า</b> = Claimed ภายในเป้า Response (Critical 5 / High 15 / Medium 60 / Low 240 นาที นับแบบเดียวกับ Resolution) · SLA Due ใช้ค่าที่เก็บไว้ ไม่คำนวณใหม่ · เป้าเวลาเป็นค่าจำลองที่รอทีมยืนยัน
       </p>
     </section>
 
@@ -113,7 +116,7 @@
     </div>
 
     <div id="detail" hidden>
-      <section class="section" id="analytics" aria-labelledby="h-an">
+      <section class="section" id="analytics" hidden aria-labelledby="h-an">
         <div class="section-h"><h2 id="h-an">Ticket Analytics</h2><span class="demo-mini">DEMO</span><p>จำนวน Ticket ตามสถานะ สาขา ความเร่งด่วน หมวดหมู่ และแนวโน้มรายวัน</p></div>
         <div class="grid">
           <article class="card span-5"><div class="card-h"><div><h3>Tickets by Status</h3><p class="sub">Waiting แยกสีเฉพาะ ไม่ปนกับ Open / In Progress / Closed</p></div></div><div id="statusBody"></div></article>
@@ -130,8 +133,15 @@
         </div>
       </section>
 
-      <section class="section" id="sla" aria-labelledby="h-sla">
+      <section class="section" id="sla" hidden aria-labelledby="h-sla">
         <div class="section-h"><h2 id="h-sla">SLA &amp; Performance</h2><span class="demo-mini">DEMO</span><p>ค่ากลาง (median) ทนต่อ Ticket ที่ค้างนานผิดปกติมากกว่าค่าเฉลี่ย · n = จำนวน Ticket ที่ใช้คำนวณ</p></div>
+        <details class="def" id="slaDef">
+          <summary>นิยามและเป้า SLA ที่ใช้ใน Prototype</summary>
+          <div class="def-body">
+            <p>นิยามใน Prototype: <b>SLA Due</b> นับจาก Claimed At ตามเป้า Resolution ของแต่ละ Priority (Critical 2 ชม. นับต่อเนื่อง 24/7 · High 4 / Medium 9 / Low 18 ชั่วโมงทำการ นับเฉพาะ จ.–ศ. 09:00–18:00 ไม่ตัดวันหยุดนักขัตฤกษ์) และ <b>หยุดนับเมื่ออยู่ในสถานะ Waiting</b> · Ticket ที่ยังไม่ถูกรับ (Open) แสดง <b>Not Started</b> · <b>SLA Breached</b> = รับแล้ว ยังไม่ปิด และเวลาปัจจุบัน (ของ Demo) เกิน SLA Due · <b>SLA Due Soon</b> = รับแล้ว ยังไม่ปิด และเวลา SLA เหลือ ≤ 60 นาที · <b>Response ตามเป้า</b> = Claimed ภายในเป้า Response (Critical 5 / High 15 / Medium 60 / Low 240 นาที นับแบบเดียวกับ Resolution) · SLA Due ใช้ค่าที่เก็บไว้ ไม่คำนวณใหม่ · เป้าเวลาเป็นค่าจำลองที่รอทีมยืนยัน</p>
+            <div id="slaTargetsTbl"></div>
+          </div>
+        </details>
         <div class="perf" id="perf"></div>
         <div class="grid">
           <article class="card span-7"><div class="card-h"><div><h3>Resolution Time by Priority</h3><p class="sub">median · รวมกับไม่รวมช่วง Waiting (Created → Closed)</p></div></div><div id="resBody"></div></article>
@@ -139,7 +149,7 @@
         </div>
       </section>
 
-      <section class="section" id="satisfaction" aria-labelledby="h-sat">
+      <section class="section" id="satisfaction" hidden aria-labelledby="h-sat">
         <div class="section-h"><h2 id="h-sat">Customer Satisfaction</h2><span class="demo-mini">DEMO</span><p>คะแนนความพึงพอใจ 1–5 ดาว ของ Ticket ที่ปิดแล้ว · n = จำนวนที่ให้คะแนน</p></div>
         <div class="kpis sat-kpis" id="satKpis"></div>
         <p class="card sub" style="margin-top:12px;padding:10px 14px;background:var(--surface-2);box-shadow:none">
@@ -151,7 +161,7 @@
         </div>
       </section>
 
-      <section class="section" id="tickets" aria-labelledby="h-tk">
+      <section class="section" id="tickets" hidden aria-labelledby="h-tk">
         <div class="section-h"><h2 id="h-tk">Ticket List</h2><span class="demo-mini">DEMO</span><p>คลิกหัวคอลัมน์เพื่อเรียงลำดับ</p></div>
         <div class="card table-card">
           <div class="tbl-scroll"><table class="t" id="ticketTable"></table></div>
