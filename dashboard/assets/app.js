@@ -10,8 +10,20 @@
   var TH_MONTH = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 
   var D = null;                                   // loaded data
+  var CLK = null;                                 // SLA clock built from D (slaClock below)
   var OFF = 7 * HOUR;
-  var state = { preset: 30, from: '', to: '', branch: '', status: '', priority: '', sortKey: 'createdAt', sortDir: -1, page: 1, view: 'normal' };
+  var PAGES = {                                   // one page per left-menu item; each page offers only the filters that make sense for it
+    overview:     { name: 'Overview',            fields: ['date', 'branch', 'priority'] },
+    analytics:    { name: 'Ticket Analytics',    fields: ['date', 'branch', 'priority', 'category'] },
+    sla:          { name: 'SLA & Performance',   fields: ['date', 'branch', 'priority', 'category'] },
+    satisfaction: { name: 'Customer Satisfaction', fields: ['date', 'branch', 'priority', 'category'] },
+    tickets:      { name: 'Ticket List',         fields: ['date', 'branch', 'status', 'priority', 'category', 'q'] }
+  };
+  var PAGE_IDS = ['overview', 'analytics', 'sla', 'satisfaction', 'tickets'];
+  var FKEYS = ['preset', 'from', 'to', 'branch', 'status', 'priority', 'category', 'q'];
+  var FS = {};                                    // remembered filter values per page (pages never share or leak filters)
+  var cur = 'overview';
+  var state = { preset: 30, from: '', to: '', branch: '', status: '', priority: '', category: '', q: '', sortKey: 'createdAt', sortDir: -1, page: 1, view: 'normal' };
   var PAGE = 10;
   var lastFiltered = [];
 
@@ -37,6 +49,65 @@
   function pct(a, b) { return b ? Math.round(a / b * 1000) / 10 : null; }
   function count(list, fn) { var n = 0; list.forEach(function (x) { if (fn(x)) { n++; } }); return n; }
 
+  /* ---------- SLA clock ----------
+     Same calendar maths as mock-data.js. The SLA clock runs from Claimed At, only inside working time unless the priority is '24x7',
+     and is stopped while the ticket is Waiting. SLA Due / Response Due are STORED in the data; this clock is used to show the time
+     left (Due Soon) and by the DEMO guard to check that the stored values are consistent. */
+  function slaClock(data) {
+    var S = data.workCalendar.startHour * HOUR, E = data.workCalendar.endHour * HOUR, days = data.workCalendar.days, off = data.tzOffsetMs;
+    function nextOpen(t) {
+      var l = t + off, di = Math.floor(l / DAY), tod = l - di * DAY;
+      for (var g = 0; g < 400; g++) {
+        if (days.indexOf(((4 + di) % 7 + 7) % 7) >= 0) {
+          if (tod < S) { return di * DAY + S - off; }
+          if (tod < E) { return di * DAY + tod - off; }
+        }
+        di++; tod = 0;
+      }
+      return t;
+    }
+    function addWork(start, ms) {
+      var t = nextOpen(start);
+      while (ms > 0) {
+        var end = Math.floor((t + off) / DAY) * DAY + E - off, room = end - t;
+        if (ms <= room) { return t + ms; }
+        ms -= room; t = nextOpen(end);
+      }
+      return t;
+    }
+    function workBetween(a, b) {
+      if (b <= a) { return 0; }
+      var total = 0, t = nextOpen(a);
+      while (t < b) { var end = Math.floor((t + off) / DAY) * DAY + E - off; total += Math.min(end, b) - t; t = nextOpen(end); }
+      return total;
+    }
+    function add(p, start, ms) { return data.slaTargets[p].cal === '24x7' ? start + ms : addWork(start, ms); }
+    function between(p, a, b) { return data.slaTargets[p].cal === '24x7' ? Math.max(0, b - a) : workBetween(a, b); }
+    return {
+      add: add, between: between,
+      respDue: function (t) { return add(t.priority, t.createdAt, data.slaTargets[t.priority].respMin * MIN); },
+      slaDue: function (t) {
+        if (t.claimedAt === null) { return null; }
+        var budget = data.slaTargets[t.priority].resMin * MIN;
+        if (t.waitStartedAt === null) { return add(t.priority, t.claimedAt, budget); }
+        var used = between(t.priority, t.claimedAt, t.waitStartedAt);
+        if (used >= budget) { return add(t.priority, t.claimedAt, budget); }
+        return add(t.priority, t.waitEndedAt !== null ? t.waitEndedAt : data.now, budget - used);      // still Waiting: as if it resumed now
+      }
+    };
+  }
+  function fmtTarget(min, p) {                      // "15 นาที" / "4 ชม.ทำการ" / "9 ชม.ทำการ (1 วันทำการ)"
+    var work = D.slaTargets[p].cal !== '24x7', dayMin = (D.workCalendar.endHour - D.workCalendar.startHour) * 60;
+    if (min < 60) { return min + ' นาที'; }
+    var h = Math.round(min / 6) / 10, s = h + (work ? ' ชม.ทำการ' : ' ชม.');
+    if (work && min >= dayMin && min % dayMin === 0) { s += ' (' + (min / dayMin) + ' วันทำการ)'; }
+    return s;
+  }
+  function targetText(p) {
+    var g = D.slaTargets[p];
+    return 'เป้า Response ' + fmtTarget(g.respMin, p) + ' · Resolution ' + fmtTarget(g.resMin, p) + (g.cal === '24x7' ? ' · นับตลอด 24 ชม.' : '') + ' (demo)';
+  }
+
   /* ---------- status / SLA metadata (colour + shape + text, never colour alone) ---------- */
   var ST = {
     'Open': { cls: 'open', v: '--s-open', rank: 0 },
@@ -49,7 +120,8 @@
     'Near Due': { cls: 'near', v: '--sla-near', rank: 1 },
     'On Time': { cls: 'ok', v: '--sla-ok', rank: 2 },
     'Met': { cls: 'ok', v: '--sla-ok', rank: 3 },
-    'Missed': { cls: 'over', v: '--sla-over', rank: 4 }
+    'Missed': { cls: 'over', v: '--sla-over', rank: 4 },
+    'Not Started': { cls: 'open', v: '--s-open', rank: 5 }
   };
   var PRI = { 'Low': { v: '--p-low', rank: 0 }, 'Medium': { v: '--p-med', rank: 1 }, 'High': { v: '--p-high', rank: 2 }, 'Critical': { v: '--p-crit', rank: 3 } };
 
@@ -63,15 +135,17 @@
       'Near Due': '<circle cx="8" cy="8" r="5.6"/><path d="M8 4.8V8l2.2 1.4"/>',
       'On Time': '<path d="M3 8.4l3.2 3.2L13 4.6"/>',
       'Met': '<path d="M3 8.4l3.2 3.2L13 4.6"/>',
-      'Missed': '<circle cx="8" cy="8" r="5.6"/><path d="M5.8 5.8l4.4 4.4M10.2 5.8l-4.4 4.4"/>'
+      'Missed': '<circle cx="8" cy="8" r="5.6"/><path d="M5.8 5.8l4.4 4.4M10.2 5.8l-4.4 4.4"/>',
+      'Not Started': '<circle cx="8" cy="8" r="5.6"/>'
     }[kind] || '';
     return '<svg class="sw" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:var(' + v + ');' + (size ? 'width:' + size + 'px;height:' + size + 'px' : '') + '">' + p + '</svg>';
   }
 
   function slaOf(t) {
     if (t.status === 'Closed') { return t.closedAt <= t.slaDue ? 'Met' : 'Missed'; }
+    if (t.slaDue === null) { return 'Not Started'; }                          // not claimed yet: the SLA clock has not started
     if (D.now > t.slaDue) { return 'Overdue'; }
-    if (t.slaDue - D.now <= 60 * MIN) { return 'Near Due'; }
+    if (CLK.between(t.priority, D.now, t.slaDue) <= 60 * MIN) { return 'Near Due'; }   // SLA time left (working time unless 24x7)
     return 'On Time';
   }
 
@@ -124,7 +198,9 @@
       return t.createdAt >= from && t.createdAt < to &&
         (!state.branch || t.branch === state.branch) &&
         (!state.status || t.status === state.status) &&
-        (!state.priority || t.priority === state.priority);
+        (!state.priority || t.priority === state.priority) &&
+        (!state.category || t.category === state.category) &&
+        (!state.q || t.id.toLowerCase().indexOf(state.q.toLowerCase()) >= 0);
     });
   }
 
@@ -144,8 +220,8 @@
       { l: 'In Progress', n: by['In Progress'], s: share(by['In Progress']) + ' · กำลังดำเนินการ', i: icon('In Progress', ST['In Progress'].v) },
       { l: 'Waiting', n: by['Waiting'], s: 'รอ User ' + wu + ' · รอ Vendor ' + wv, i: icon('Waiting', ST['Waiting'].v) },
       { l: 'Closed', n: by['Closed'], s: share(by['Closed']) + ' · ปิดแล้ว', i: icon('Closed', ST['Closed'].v) },
-      { l: 'SLA Breached', n: breached, s: 'ยังไม่ปิด และเกิน SLA Due', i: icon('Overdue', '--sla-over') },
-      { l: 'SLA Due Soon', n: soon, s: 'ยังไม่ปิด และเหลือ ≤ 60 นาที', i: icon('Near Due', '--sla-near') }
+      { l: 'SLA Breached', n: breached, s: 'รับเรื่องแล้ว ยังไม่ปิด และเกิน SLA Due', i: icon('Overdue', '--sla-over') },
+      { l: 'SLA Due Soon', n: soon, s: 'รับเรื่องแล้ว ยังไม่ปิด และเวลา SLA เหลือ ≤ 60 นาที', i: icon('Near Due', '--sla-near') }
     ];
     $('#kpis').innerHTML = cards.map(function (c) {
       return '<div class="kpi ' + (c.c || '') + '"><div class="kpi-l">' + c.i + '<span>' + esc(c.l) + '</span></div><div class="kpi-n">' + c.n + '</div><div class="kpi-s">' + esc(c.s) + '</div></div>';
@@ -201,12 +277,12 @@
   function renderPriority(f) {
     var rows = D.priorities.slice().reverse().map(function (p) {
       var n = count(f, function (t) { return t.priority === p; });
-      return { name: p, value: n, color: 'var(' + PRI[p].v + ')', tip: p + '|' + n + ' tickets' + (f.length ? ' (' + pct(n, f.length) + '%)' : '') + '|SLA ' + D.slaHours[p] + ' h (demo)' };
+      return { name: p, value: n, color: 'var(' + PRI[p].v + ')', tip: p + '|' + n + ' tickets' + (f.length ? ' (' + pct(n, f.length) + '%)' : '') + '|' + targetText(p) };
     });
     var max = Math.max.apply(null, rows.map(function (r) { return r.value; }).concat([1]));
     $('#priorityBody').innerHTML = barRows(f.length ? rows : [], max, function (r) { return r.value; }) +
       '<div class="legend"><span>เรียงจาก Critical ไป Low · เข้มขึ้น = เร่งด่วนขึ้น</span></div>' +
-      dataTable(['Priority', 'Tickets', 'SLA hours (demo)'], rows.map(function (r) { return [r.name, r.value, D.slaHours[r.name]]; }));
+      dataTable(['Priority', 'Tickets', 'Response target (demo)', 'Resolution target (demo)'], rows.map(function (r) { var g = D.slaTargets[r.name]; return [r.name, r.value, fmtTarget(g.respMin, r.name), fmtTarget(g.resMin, r.name) + (g.cal === '24x7' ? ' (24 ชม.)' : '')]; }));
   }
 
   /* ---------- category ---------- */
@@ -281,27 +357,35 @@
 
   /* ---------- SLA & performance ---------- */
   function renderPerf(f) {
-    var resp = [], resTot = [], resEx = [], waits = [], closedN = 0, met = 0;
+    var resp = [], resTot = [], resEx = [], waits = [], closedN = 0, met = 0, rClaimed = 0, rMet = 0, rLate = 0;
     f.forEach(function (t) {
       if (t.claimedAt) { resp.push(t.claimedAt - t.createdAt); }
+      if (t.claimedAt !== null) { rClaimed++; if (t.claimedAt <= t.respDue) { rMet++; } } else if (D.now > t.respDue) { rLate++; }
       if (t.waitMs > 0) { waits.push(t.waitMs); }
       if (t.status === 'Closed') {
         closedN++; if (t.closedAt <= t.slaDue) { met++; }
         resTot.push(t.closedAt - t.createdAt); resEx.push(Math.max(0, t.closedAt - t.createdAt - t.waitMs));
       }
     });
-    var comp = pct(met, closedN);
+    var comp = pct(met, closedN), rcomp = pct(rMet, rClaimed);
     var tiles = [
       { l: 'Response Time', n: fmtDur(median(resp)), s: 'median · avg ' + fmtDur(mean(resp)) + ' · n=' + resp.length + ' (Created → Claimed)' },
+      { l: 'Response ตามเป้า', n: rcomp == null ? '—' : rcomp + '<small>%</small>', s: rClaimed ? 'ตอบทัน ' + rMet + ' จาก ' + rClaimed + ' Ticket ที่รับเรื่องแล้ว' + (rLate ? ' · ยังไม่รับและเกินเป้า ' + rLate : '') : 'ยังไม่มี Ticket ที่รับเรื่อง', m: rcomp, ml: 'Response on-target' },
       { l: 'Resolution Time', n: fmtDur(median(resTot)), s: 'median รวมเวลา Waiting · avg ' + fmtDur(mean(resTot)) + ' · n=' + closedN },
       { l: 'Resolution (excl. Waiting)', n: fmtDur(median(resEx)), s: 'median ไม่รวมช่วง Waiting · avg ' + fmtDur(mean(resEx)) + ' · n=' + closedN },
       { l: 'Waiting Time', n: fmtDur(mean(waits)), s: 'avg ต่อ Ticket ที่เคย Waiting · ' + (f.length ? pct(waits.length, f.length) + '% ของ Ticket' : '—') + ' · n=' + waits.length },
       { l: 'SLA Compliance', n: comp == null ? '—' : comp + '<small>%</small>', s: closedN ? met + ' จาก ' + closedN + ' Ticket ที่ปิด ปิดทัน SLA Due' : 'ยังไม่มี Ticket ที่ปิด', m: comp }
     ];
-    $('#perf').innerHTML = tiles.map(function (t) {
-      return '<div class="tile"><div class="t-l">' + esc(t.l) + '</div><div class="t-n">' + t.n + '</div><div class="t-s">' + esc(t.s) + '</div>' +
-        (t.m != null ? '<div class="meter" role="img" aria-label="SLA compliance ' + t.m + ' percent"><i style="width:' + t.m + '%"></i></div>' : '') + '</div>';
-    }).join('');
+    var tileHtml = function (t, cls) {
+      return '<div class="tile' + (cls ? ' ' + cls : '') + '"><div class="t-l">' + esc(t.l) + '</div><div class="t-n">' + t.n + '</div><div class="t-s">' + esc(t.s) + '</div>' +
+        (t.m != null ? '<div class="meter" role="img" aria-label="' + (t.ml || 'SLA compliance') + ' ' + t.m + ' percent"><i style="width:' + t.m + '%"></i></div>' : '') + '</div>';
+    };
+    var byL = {}; tiles.forEach(function (t) { byL[t.l] = t; });
+    $('#perf').innerHTML =
+      '<h3 class="perf-h">ผลตามเป้า SLA</h3><div class="perf-row hero">' + tileHtml(byL['SLA Compliance'], 'hero') + tileHtml(byL['Response ตามเป้า'], 'hero') + '</div>' +
+      '<h3 class="perf-h">เวลาที่ใช้</h3><div class="perf-row">' + ['Response Time', 'Resolution Time', 'Resolution (excl. Waiting)', 'Waiting Time'].map(function (l) { return tileHtml(byL[l]); }).join('') + '</div>';
+    $('#slaTargetsTbl').innerHTML = '<table class="targets"><caption class="sr-only">เป้า SLA ต่อ Priority (ค่าจำลอง)</caption><thead><tr><th scope="col">Priority</th><th scope="col">Response</th><th scope="col">Resolution</th><th scope="col">ปฏิทินนับเวลา</th></tr></thead><tbody>' +
+      D.priorities.slice().reverse().map(function (p) { var g = D.slaTargets[p]; return '<tr><th scope="row">' + esc(p) + '</th><td>' + fmtTarget(g.respMin, p) + '</td><td>' + fmtTarget(g.resMin, p) + '</td><td>' + (g.cal === '24x7' ? 'ตลอด 24 ชม. ทุกวัน' : 'จ.–ศ. ' + pad(D.workCalendar.startHour) + ':00–' + pad(D.workCalendar.endHour) + ':00') + '</td></tr>'; }).join('') + '</tbody></table>';
 
     // resolution time by priority: total vs excluding waiting (median hours)
     var prow = D.priorities.slice().reverse().map(function (p) {
@@ -313,7 +397,7 @@
     $('#resBody').innerHTML = prow.some(function (r) { return r.n; }) ?
       '<div class="bars">' + prow.map(function (r) {
         if (!r.n) { return '<div class="bar-row" style="--vw:150px"><span class="name">' + r.p + '</span><span class="empty-mini" style="padding:0;text-align:left">ไม่มี Ticket ที่ปิด</span><span class="val">—</span></div>'; }
-        return '<div class="bar-row" tabindex="0" style="--vw:150px" data-tip="' + esc(r.p + ' · n=' + r.n + '|~var(--brand)~รวม Waiting: ' + fmtDur(r.tot) + '|~var(--brand-2)~ไม่รวม Waiting: ' + fmtDur(r.ex) + '|SLA ' + D.slaHours[r.p] + ' h (demo)') + '"><span class="name">' + r.p + '</span>' +
+        return '<div class="bar-row" tabindex="0" style="--vw:150px" data-tip="' + esc(r.p + ' · n=' + r.n + '|~var(--brand)~รวม Waiting: ' + fmtDur(r.tot) + '|~var(--brand-2)~ไม่รวม Waiting: ' + fmtDur(r.ex) + '|' + targetText(r.p)) + '"><span class="name">' + r.p + '</span>' +
           '<span class="pair"><span class="track"><span class="fill" style="display:block;width:' + (r.tot / mx * 100) + '%;background:var(--brand)"></span></span><span class="track"><span class="fill" style="display:block;width:' + (r.ex / mx * 100) + '%;background:var(--brand-2)"></span></span></span>' +
           '<span class="val">' + fmtDur(r.tot) + '<small> / ' + fmtDur(r.ex) + '</small></span></div>';
       }).join('') + '</div><div class="legend"><span><i style="background:var(--brand)"></i>รวมเวลา Waiting</span><span><i style="background:var(--brand-2)"></i>ไม่รวมเวลา Waiting</span></div>' :
@@ -398,7 +482,7 @@
     }).join('');
     var body = view.map(function (t) {
       var sl = slaOf(t), sm = SLAM[sl], sm2 = ST[t.status];
-      var due = 'SLA Due ' + fmtDT(t.slaDue) + (t.status === 'Closed' ? ' · ปิด ' + fmtDT(t.closedAt) : '');
+      var due = (t.slaDue === null ? 'ยังไม่เริ่มนับ SLA (ยังไม่มีผู้รับเรื่อง)' : 'SLA Due ' + fmtDT(t.slaDue) + (t.status === 'Closed' ? ' · ปิด ' + fmtDT(t.closedAt) : '')) + ' · Response Due ' + fmtDT(t.respDue);
       return '<tr><td class="id">' + esc(t.id) + '</td><td>' + fmtDT(t.createdAt) + '</td><td>' + esc(branchLabel(t.branch)) + '</td><td>' + esc(t.category) + '</td>' +
         '<td><span class="pr"><i style="background:var(' + PRI[t.priority].v + ')"></i>' + t.priority + '</span></td>' +
         '<td><span class="pill ' + sm2.cls + '">' + icon(t.status, sm2.v) + t.status + (t.status === 'Waiting' ? ' · ' + (t.waitingReason === 'User' ? 'รอ User' : 'รอ Vendor') : '') + '</span></td>' +
@@ -426,27 +510,63 @@
     if (state.branch) { parts.push('Branch: ' + branchLabel(state.branch)); }
     if (state.status) { parts.push('Status: ' + state.status); }
     if (state.priority) { parts.push('Priority: ' + state.priority); }
+    if (state.category) { parts.push('Category: ' + state.category); }
+    if (state.q) { parts.push('Ticket ID มี "' + state.q + '"'); }
     $('#activeLine').textContent = 'ตัวกรองที่ใช้: ' + parts.join(' · ') + ' → ' + n + ' tickets (DEMO)';
   }
   function showView() {
     var v = state.view;
     $('#skeleton').hidden = v !== 'loading';
     $('#errorBox').hidden = v !== 'error';
-    $('#overview').hidden = v === 'loading' || v === 'error';
+    var bad = v === 'loading' || v === 'error';
     var empty = (v === 'empty') || (v === 'normal' && lastFiltered.length === 0);
-    $('#emptyBox').hidden = v === 'loading' || v === 'error' ? true : !empty;
-    $('#detail').hidden = v === 'loading' || v === 'error' || empty;
+    $('#overview').hidden = bad || cur !== 'overview';
+    $('#emptyBox').hidden = bad ? true : !empty;
+    $('#detail').hidden = bad || empty;
+    PAGE_IDS.forEach(function (id) { if (id !== 'overview') { var el = document.getElementById(id); if (el) { el.hidden = cur !== id; } } });
   }
+  var RENDERERS = {
+    overview: function (f) { renderKpis(f); },
+    analytics: function (f) { renderStatus(f); renderBranch(f); renderPriority(f); renderCategory(f); renderWaiting(f); renderTrend(f); },
+    sla: function (f) { renderPerf(f); },
+    satisfaction: function (f) { renderSatisfaction(f); },
+    tickets: function (f) { renderTable(f); }
+  };
   function render() {
     lastFiltered = state.view === 'empty' ? [] : filtered();
     activeLine(lastFiltered.length);
     showView();
-    renderKpis(lastFiltered);
-    if (lastFiltered.length) {
-      renderStatus(lastFiltered); renderBranch(lastFiltered); renderPriority(lastFiltered);
-      renderCategory(lastFiltered); renderWaiting(lastFiltered);
-      $('#detail').hidden = state.view !== 'normal'; renderTrend(lastFiltered); renderPerf(lastFiltered); renderSatisfaction(lastFiltered); renderTable(lastFiltered);
-    }
+    if (lastFiltered.length) { RENDERERS[cur](lastFiltered); }
+  }
+
+  /* ---------- pages (hash routing) ---------- */
+  function applyFields() {                        // show only this page's filters and put its remembered values in the controls
+    var allow = PAGES[cur].fields;
+    $$('.filters [data-f]').forEach(function (el) { el.hidden = allow.indexOf(el.getAttribute('data-f')) < 0; });
+    $('#from').value = state.from; $('#to').value = state.to;
+    ['branch', 'status', 'priority', 'category', 'q'].forEach(function (k) { $('#' + k).value = state[k]; });
+    $$('.presets button').forEach(function (b) { b.setAttribute('aria-pressed', String(state.preset !== null && Number(b.getAttribute('data-n')) === state.preset)); });
+    $('#pageName').textContent = 'ตัวกรองของหน้า ' + PAGES[cur].name;
+    $$('.nav a').forEach(function (a) { if (a.getAttribute('href') === '#' + cur) { a.setAttribute('aria-current', 'true'); } else { a.removeAttribute('aria-current'); } });
+  }
+  function pageFromHash() { var h = (location.hash || '').replace('#', ''); return PAGES[h] ? h : 'overview'; }
+  function route(first) {
+    var next = pageFromHash();
+    if (!first && next === cur) { return; }
+    FKEYS.forEach(function (k) { FS[cur][k] = state[k]; });           // remember the page we are leaving
+    cur = next;
+    FKEYS.forEach(function (k) { state[k] = FS[cur][k]; });
+    state.page = 1; dateNote('');
+    applyFields();
+    if (!first) { window.scrollTo(0, 0); }
+    if (D) { render(); }
+  }
+  function initPages() {
+    var def = function () { var to = ymd(D.now), from = ymd(D.now - 29 * DAY); if (dayStart(from) < D.firstDay) { from = ymd(D.firstDay); } return { preset: 30, from: from, to: to, branch: '', status: '', priority: '', category: '', q: '' }; };
+    PAGE_IDS.forEach(function (id) { FS[id] = def(); });
+    window.addEventListener('hashchange', function () { route(false); });
+    cur = pageFromHash(); FKEYS.forEach(function (k) { state[k] = FS[cur][k]; });
+    applyFields();
   }
 
   /* ---------- filter controls ---------- */
@@ -461,9 +581,9 @@
   }
   function initFilters() {
     var fill = function (id, list, all, label) { $(id).innerHTML = '<option value="">' + all + '</option>' + list.map(function (x) { return '<option value="' + esc(x) + '">' + esc(label ? label(x) : x) + '</option>'; }).join(''); };
-    fill('#branch', D.branches, 'ทุกสาขา', branchLabel); fill('#status', D.statuses, 'All statuses'); fill('#priority', D.priorities.slice().reverse(), 'All priorities');
+    fill('#branch', D.branches, 'ทุกสาขา', branchLabel); fill('#status', D.statuses, 'All statuses'); fill('#priority', D.priorities.slice().reverse(), 'All priorities'); fill('#category', D.categories, 'All categories');
     $('#from').min = $('#to').min = ymd(D.firstDay); $('#from').max = $('#to').max = ymd(D.now);
-    setPreset(30);
+    initPages();
     $$('.presets button').forEach(function (b) { b.addEventListener('click', function () { setPreset(Number(b.getAttribute('data-n'))); state.page = 1; render(); }); });
     ['from', 'to'].forEach(function (id) {
       $('#' + id).addEventListener('change', function () {
@@ -480,8 +600,9 @@
         state.page = 1; render();
       });
     });
-    ['branch', 'status', 'priority'].forEach(function (id) { $('#' + id).addEventListener('change', function () { state[id] = this.value; state.page = 1; render(); }); });
-    var reset = function () { state.branch = state.status = state.priority = ''; ['branch', 'status', 'priority'].forEach(function (id) { $('#' + id).value = ''; }); setPreset(30); state.page = 1; state.view = 'normal'; $('#vNormal').checked = true; render(); };
+    ['branch', 'status', 'priority', 'category'].forEach(function (id) { $('#' + id).addEventListener('change', function () { state[id] = this.value; state.page = 1; render(); }); });
+    $('#q').addEventListener('input', function () { state.q = this.value.replace(/^\s+|\s+$/g, '').slice(0, 24); state.page = 1; render(); });
+    var reset = function () { state.branch = state.status = state.priority = state.category = state.q = ''; ['branch', 'status', 'priority', 'category', 'q'].forEach(function (id) { $('#' + id).value = ''; }); setPreset(30); state.page = 1; state.view = 'normal'; $('#vNormal').checked = true; render(); };
     $('#reset').addEventListener('click', reset); $('#resetEmpty').addEventListener('click', reset);
     $('#prev').addEventListener('click', function () { state.page--; renderTable(lastFiltered); });
     $('#next').addEventListener('click', function () { state.page++; renderTable(lastFiltered); });
@@ -507,13 +628,6 @@
     document.addEventListener('click', function (e) { if (document.body.classList.contains('nav-open') && !e.target.closest('#side')) { document.body.classList.remove('nav-open'); $('#menu').setAttribute('aria-expanded', 'false'); } });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { document.body.classList.remove('nav-open'); } });
     $$('.nav a').forEach(function (a) { a.addEventListener('click', function () { document.body.classList.remove('nav-open'); }); });
-    if ('IntersectionObserver' in window) {
-      var links = {}; $$('.nav a').forEach(function (a) { links[a.getAttribute('href').slice(1)] = a; });
-      var io = new IntersectionObserver(function (en) {
-        en.forEach(function (x) { if (x.isIntersecting && links[x.target.id]) { $$('.nav a').forEach(function (a) { a.removeAttribute('aria-current'); }); links[x.target.id].setAttribute('aria-current', 'true'); } });
-      }, { rootMargin: '-25% 0px -65% 0px' });
-      Object.keys(links).forEach(function (id) { var el = document.getElementById(id); if (el) { io.observe(el); } });
-    }
     var raf = 0, lastW = 0;
     var onResize = function () { var b = $('#trendBox'); if (!b || b.clientWidth === lastW) { return; } lastW = b.clientWidth; cancelAnimationFrame(raf); raf = requestAnimationFrame(drawTrend); };
     if ('ResizeObserver' in window) { new ResizeObserver(onResize).observe($('#trendBox')); } else { window.addEventListener('resize', onResize); }
@@ -522,8 +636,9 @@
   /* ---------- DEMO guard ----------
      Accidental-mix-up protection ONLY: it rejects the whole data set (nothing is rendered) when the shape does not match this
      prototype's Mock Data schema. It is NOT proof that the data source really is mock data - anyone can imitate the format. */
-  var T_KEYS = ['id', 'createdAt', 'branch', 'category', 'priority', 'status', 'waitingReason', 'assignee', 'claimedAt', 'startedAt', 'closedAt', 'waitMs', 'slaDue', 'rating'];
+  var T_KEYS = ['id', 'createdAt', 'branch', 'category', 'priority', 'status', 'waitingReason', 'assignee', 'claimedAt', 'startedAt', 'closedAt', 'waitMs', 'waitStartedAt', 'waitEndedAt', 'respDue', 'slaDue', 'rating'];
   function isNum(x) { return typeof x === 'number' && isFinite(x); }
+  function isInt(x) { return isNum(x) && Math.floor(x) === x; }
   function isStrList(a) { return Array.isArray(a) && a.length > 0 && a.every(function (s) { return typeof s === 'string' && s !== ''; }); }
   function sameSet(a, ref) {                      // same members as `ref`, no duplicates (order may differ)
     return a.length === ref.length && ref.every(function (x) { return a.indexOf(x) >= 0; }) && a.every(function (x, i) { return a.indexOf(x) === i; });
@@ -538,12 +653,15 @@
       if (data.source !== 'DEMO') { return 'source ไม่ใช่ DEMO'; }
       if (!isNum(data.now) || !isNum(data.tzOffsetMs) || !isNum(data.firstDay)) { return 'ขาดค่าเวลา now/tzOffsetMs/firstDay'; }
       if (!isStrList(data.branches) || !isStrList(data.categories) || !isStrList(data.priorities) || !isStrList(data.statuses)) { return 'ขาดรายการ branches/categories/priorities/statuses'; }
-      if (!data.slaHours || typeof data.slaHours !== 'object' || !data.priorities.every(function (p) { return isNum(data.slaHours[p]) && data.slaHours[p] > 0; })) { return 'slaHours ไม่ครบ'; }
+      if (!data.slaTargets || typeof data.slaTargets !== 'object' || !data.priorities.every(function (p) { var g = data.slaTargets[p]; return g && isNum(g.respMin) && g.respMin > 0 && isNum(g.resMin) && g.resMin > 0 && (g.cal === '24x7' || g.cal === 'work'); })) { return 'slaTargets ไม่ครบ'; }
+      var wc = data.workCalendar;
+      if (!wc || typeof wc !== 'object' || !isInt(wc.startHour) || !isInt(wc.endHour) || wc.startHour < 0 || wc.endHour > 24 || wc.endHour <= wc.startHour ||
+          !Array.isArray(wc.days) || wc.days.length === 0 || !wc.days.every(function (d) { return isInt(d) && d >= 0 && d <= 6; })) { return 'workCalendar ไม่ถูกต้อง'; }
       if (!sameSet(data.branches, Object.keys(BRANCH_TH))) { return 'branches ต้องเป็น 6 สาขาที่กำหนดเท่านั้น'; }
       if (!sameSet(data.statuses, Object.keys(ST))) { return 'statuses ไม่ตรงกับค่าที่ Dashboard รองรับ'; }
       if (!sameSet(data.priorities, Object.keys(PRI))) { return 'priorities ไม่ตรงกับค่าที่ Dashboard รองรับ'; }
       if (!Array.isArray(data.tickets)) { return 'tickets ไม่ใช่รายการ'; }
-      var seen = {}, HOUR = 3600000, i, t, k, idm;
+      var seen = {}, clk = slaClock(data), i, t, k, idm;
       for (i = 0; i < data.tickets.length; i++) {
         t = data.tickets[i];
         var tag = 'Ticket ลำดับที่ ' + (i + 1) + ' ไม่ผ่านการตรวจ: ';
@@ -562,7 +680,7 @@
         if (!isNum(t.createdAt) || t.createdAt > data.now) { return tag + 'createdAt'; }
         var d0 = new Date(t.createdAt + data.tzOffsetMs);
         if (idm[1] !== String(d0.getUTCFullYear()) + ('0' + (d0.getUTCMonth() + 1)).slice(-2) + ('0' + d0.getUTCDate()).slice(-2)) { return tag + 'วันที่ใน ID ไม่ตรงกับ createdAt'; }
-        if (!isNum(t.slaDue) || t.slaDue !== t.createdAt + data.slaHours[t.priority] * HOUR) { return tag + 'slaDue'; }
+        if (!isNum(t.respDue) || Math.abs(t.respDue - clk.respDue(t)) > 1) { return tag + 'respDue'; }
         if (!isNum(t.waitMs) || t.waitMs < 0) { return tag + 'waitMs'; }
         if (t.waitingReason !== null && t.waitingReason !== 'User' && t.waitingReason !== 'Vendor') { return tag + 'waitingReason'; }
         if (t.assignee !== null && typeof t.assignee !== 'string') { return tag + 'assignee'; }
@@ -578,6 +696,18 @@
         if (t.waitMs > 0 && t.claimedAt === null) { return tag + 'waitMs > 0 แต่ยังไม่มี claimedAt'; }
         if (t.waitMs > tEnd - wBase) { return tag + 'waitMs มากกว่าช่วงเวลาที่ Ticket ถูกดำเนินการ'; }
         if ((t.status === 'Closed') !== (t.closedAt !== null)) { return tag + 'closedAt ไม่สอดคล้องกับ status'; }
+        if ((t.status === 'Open') !== (t.claimedAt === null)) { return tag + 'status Open ไม่สอดคล้องกับ claimedAt'; }
+        /* Waiting period (one per ticket): the SLA clock is stopped inside it. waitMs must equal its length (still-open period: up to the demo clock). */
+        if (t.waitMs === 0) {
+          if (t.waitStartedAt !== null || t.waitEndedAt !== null || t.status === 'Waiting') { return tag + 'ช่วง Waiting ไม่สอดคล้องกับ waitMs'; }
+        } else {
+          if (!isNum(t.waitStartedAt) || t.waitStartedAt < wBase || t.waitStartedAt > tEnd) { return tag + 'waitStartedAt'; }
+          if (t.status === 'Waiting') {
+            if (t.waitEndedAt !== null || Math.abs(t.waitMs - (data.now - t.waitStartedAt)) > 1) { return tag + 'ช่วง Waiting ที่ยังไม่จบไม่ตรงกับ waitMs'; }
+          } else if (!isNum(t.waitEndedAt) || t.waitEndedAt < t.waitStartedAt || t.waitEndedAt > tEnd || Math.abs(t.waitMs - (t.waitEndedAt - t.waitStartedAt)) > 1) { return tag + 'waitEndedAt'; }
+        }
+        /* SLA Due (stored): null until the ticket is claimed; afterwards it must match the SLA clock (from Claimed At, working time unless 24x7, stopped while Waiting). */
+        if (t.claimedAt === null ? t.slaDue !== null : (!isNum(t.slaDue) || Math.abs(t.slaDue - clk.slaDue(t)) > 1)) { return tag + 'slaDue'; }
         if (t.rating !== null && !(t.status === 'Closed' && typeof t.rating === 'number' && t.rating >= 1 && t.rating <= 5 && Math.floor(t.rating) === t.rating)) { return tag + 'rating'; }
       }
       return '';
@@ -606,7 +736,7 @@
         return;
       }
       $('#errorBox h2').textContent = ERR_DEF.h; $('#errorBox p').textContent = ERR_DEF.p;
-      D = data; OFF = D.tzOffsetMs;
+      D = data; OFF = D.tzOffsetMs; CLK = slaClock(D);
       $('#updated').textContent = fmtDT(D.now) + ' น. (DEMO)';
       if (!started) { initFilters(); started = true; }
       state.view = 'normal'; $('#vNormal').checked = true; render();
